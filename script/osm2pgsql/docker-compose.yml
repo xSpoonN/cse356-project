@@ -1,0 +1,51 @@
+version: '3'
+services:
+  osm2pgsql:
+    build:
+      context: .
+    command: bash -c "sleep 5; /usr/local/bin/osm-importer.sh"
+    depends_on:
+      - postgres
+    environment:
+      PG_PORT_5432_TCP_ADDR: postgres
+      PG_PORT_5432_TCP_PORT: 5432
+      PG_ENV_POSTGRES_DB: postgres
+      PG_ENV_POSTGRES_USER: postgres
+      PG_ENV_POSTGRES_PASSWORD: myscretpassword
+    restart: on-failure:2
+    volumes:
+      - ./:/osm/data
+
+  postgres:
+    image: postgis/postgis
+    command:
+      # See https://osm2pgsql.org/doc/manual.html#tuning-the-postgresql-server
+      - "postgres"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "work_mem=50MB"
+      - "-c"
+      - "maintenance_work_mem=4GB"
+      - "-c"
+      - "autovacuum_work_mem=1GB"
+      - "-c"
+      - "wal_level=minimal"
+      - "-c"
+      - "checkpoint_timeout=60min"
+      - "-c"
+      - "max_wal_size=4GB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "max_wal_senders=0"
+      - "-c"
+      - "random_page_cost=1.0"
+    ports:
+      - "0.0.0.0:5432:5432"
+    environment:
+      ALLOW_IP_RANGE: "0.0.0.0/0"
+      POSTGRES_PASSWORD: myscretpassword
+      PG_PORT: 5432
+    volumes:
+      - ../../data/:/var/lib/postgresql/data/

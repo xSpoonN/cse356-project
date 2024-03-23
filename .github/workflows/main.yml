@@ -15,7 +15,19 @@ jobs:
           install -m 600 -D /dev/null ~/.ssh/id_rsa
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
-      - name: connect and pull
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && git checkout main && ssh-agent bash -c 'ssh-add ~/.ssh/github; git fetch origin && git reset --hard origin/main' && docker compose down && docker system prune --force && docker compose -f ./docker-compose.prod.yml up -d --no-deps --build next && exit"
+      
+      - name: connect and pull code
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && git checkout main && ssh-agent bash -c 'ssh-add ~/.ssh/github; git fetch origin && git reset --hard origin/main'"
+      
+      - name: stop docker services
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && docker compose down"
+      
+      - name: delete existing Docker image
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "docker images | grep 'next' | awk '{print \$3}' | xargs -r docker rmi"
+        continue-on-error: true
+
+      - name: start docker services
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && docker compose -f ./docker-compose.prod.yml up -d --build"
+
       - name: cleanup
         run: rm -rf ~/.ssh

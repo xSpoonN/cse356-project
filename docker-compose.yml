@@ -8,10 +8,17 @@ services:
       - "3000:3000"
     volumes:
       - ./:/app
-      - /app/node_modules
-    restart: always
+      - node_modules:/app/node_modules
     depends_on:
       - postgres
+      - fluentd
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: next.access
+        fluentd-async-connect: "true"
+    restart: always
   postgres:
     container_name: postgres
     image: postgis/postgis
@@ -22,3 +29,17 @@ services:
     volumes:
       - ./data:/var/lib/postgresql/data
     restart: always
+  fluentd:
+    container_name: fluentd
+    build:
+      context: ./
+      dockerfile: fluentd.Dockerfile
+    volumes:
+      - ./logs/:/var/log/fluentd/
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    restart: always
+
+volumes:
+  node_modules:

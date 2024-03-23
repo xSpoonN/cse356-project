@@ -38,3 +38,4 @@ next-env.d.ts
 # database
 data/
 script/osm2pgsql/new-york.osm.pbf
+logs/**

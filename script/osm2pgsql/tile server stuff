@@ -3,7 +3,7 @@ https://github.com/Overv/openstreetmap-tile-server
 # Create shared volume for database data.
 docker volume create osm-data
 
-# This container imports the osm.pbf data into the PostgreSQL database. Uses an absolute path to the file, update accordingly.
+# This container imports the osm.pbf data into the PostgreSQL database. Uses an absolute path to the file, update accordingly. This can take a very long time.
 docker run -v 'C:\Users\Spoon\OneDrive\Documents\School\2024-1 Spring\CSE356\CSE356_project\script\osm2pgsql\new-york.osm.pbf:/data/region.osm.pbf' -v osm-data:/data/database/ overv/openstreetmap-tile-server import
 
 # Runs the actual tile server. Comes with a simple leaflet server at localhost:8080

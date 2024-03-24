@@ -15,6 +15,7 @@
 2. `cd` into script/provisioning
 3. change `ansible_host` to new IP address
 4. run `ansible-playbook -i inventory.ini new-vm-setup.yml` 
+
 ```
 CSE356_project
 ├─ .github
@@ -26,6 +27,8 @@ CSE356_project
 │  ├─ api
 │  │  └─ search
 │  │     └─ route.js
+│  ├─ components
+│  │  └─ Map.jsx
 │  ├─ globals.css
 │  ├─ layout.js
 │  ├─ lib
@@ -50,7 +53,8 @@ CSE356_project
 │  │  ├─ custom.style
 │  │  ├─ docker-compose.yml
 │  │  ├─ Dockerfile
-│  │  └─ osm-importer.sh
+│  │  ├─ osm-importer.sh
+│  │  └─ tile server stuff
 │  └─ provisioning
 │     ├─ cse356
 │     ├─ github

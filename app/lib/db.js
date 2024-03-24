@@ -7,7 +7,7 @@ import { Pool } from 'pg';
  */
 export async function connect_db() {
   const pool = new Pool({
-    host: 'localhost',
+    host: 'localhost', //this should be tile-server when running in docker environment
     user: 'renderer',
     password: 'renderer',
     database: 'gis',

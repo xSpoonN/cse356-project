@@ -6,9 +6,8 @@
 
 ## Development
 
-1. install `new-york.osm.pbf` file from `https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf` and place into script/osm2pgsql
-2. `cd` into script/osm2pgsql and run `docker compose up` (this will generate PostGIS data into data/ folder - will take some time)
-3. run `docker compose up` in the root directory
+1. run `docker volume create osm-data && docker run -v '/absolute/path/to/region.osm.pbf' -v osm-data:/data/database overv/openstreetmap-tile-server import` (https://github.com/Overv/openstreetmap-tile-server)
+2. run `docker compose up` in the root directory
 
 ## Setting up new VM
 1. copy IP address of the new VM
@@ -41,6 +40,7 @@ CSE356_project
 ├─ fluent.conf
 ├─ fluentd.Dockerfile
 ├─ jsconfig.json
+├─ new-york.osm.pbf
 ├─ next.config.mjs
 ├─ package-lock.json
 ├─ package.json
@@ -49,12 +49,6 @@ CSE356_project
 │  └─ tmp.txt
 ├─ README.md
 ├─ script
-│  ├─ osm2pgsql
-│  │  ├─ custom.style
-│  │  ├─ docker-compose.yml
-│  │  ├─ Dockerfile
-│  │  ├─ osm-importer.sh
-│  │  └─ tile server stuff
 │  └─ provisioning
 │     ├─ cse356
 │     ├─ github

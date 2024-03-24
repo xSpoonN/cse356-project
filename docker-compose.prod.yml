@@ -8,7 +8,6 @@ services:
       - "3000:3000"
     restart: always
     depends_on:
-      - postgres
       - fluentd
     logging:
       driver: "fluentd"
@@ -16,16 +15,14 @@ services:
         fluentd-address: localhost:24224
         tag: next.access
         fluentd-async-connect: "true"
-  postgres:
-    container_name: postgres
-    image: postgis/postgis
-    environment:
-      POSTGRES_PASSWORD: mysecretpassword
-    ports:
-      - "5432:5432"
+  tile-server:
+    image: overv/openstreetmap-tile-server
     volumes:
-      - ./data:/var/lib/postgresql/data
-    restart: always
+      - osm-data:/data/database/
+    ports:
+      - "8080:80"
+      - "5432:5432"
+    command: "run"
   fluentd:
     container_name: fluentd
     build:
@@ -37,3 +34,7 @@ services:
       - "24224:24224"
       - "24224:24224/udp"
     restart: always
+
+volumes:
+  osm-data:
+    external: true

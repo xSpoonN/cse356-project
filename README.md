@@ -15,3 +15,47 @@
 2. `cd` into script/provisioning
 3. change `ansible_host` to new IP address
 4. run `ansible-playbook -i inventory.ini new-vm-setup.yml` 
+```
+CSE356_project
+├─ .github
+│  └─ workflows
+│     └─ main.yml
+├─ .gitignore
+├─ .prettierrc
+├─ app
+│  ├─ api
+│  │  └─ search
+│  │     └─ route.js
+│  ├─ globals.css
+│  ├─ layout.js
+│  ├─ lib
+│  │  └─ db.js
+│  └─ page.js
+├─ docker-compose.prod.yml
+├─ docker-compose.yml
+├─ Dockerfile.dev
+├─ Dockerfile.prod
+├─ fluent.conf
+├─ fluentd.Dockerfile
+├─ jsconfig.json
+├─ next.config.mjs
+├─ package-lock.json
+├─ package.json
+├─ postcss.config.js
+├─ public
+│  └─ tmp.txt
+├─ README.md
+├─ script
+│  ├─ osm2pgsql
+│  │  ├─ custom.style
+│  │  ├─ docker-compose.yml
+│  │  ├─ Dockerfile
+│  │  └─ osm-importer.sh
+│  └─ provisioning
+│     ├─ cse356
+│     ├─ github
+│     ├─ github.pub
+│     ├─ inventory.ini
+│     └─ new-vm-setup.yml
+└─ tailwind.config.js
+```

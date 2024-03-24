@@ -53,12 +53,6 @@
         name: docker-ce
         state: latest
         update_cache: true
-    
-    - name: Copy daemon.json file
-      copy:
-        src: ./daemon.json
-        dest: /etc/docker/daemon.json
-        mode: '0644'
 
     - name: Ensure docker deamon is running
       service:

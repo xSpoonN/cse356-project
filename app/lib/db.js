@@ -7,9 +7,10 @@ import { Pool } from 'pg';
  */
 export async function connect_db() {
   const pool = new Pool({
-    host: 'postgres',
-    password: 'mysecretpassword',
-    database: 'postgres',
+    host: 'localhost',
+    user: 'renderer',
+    password: 'renderer',
+    database: 'gis',
     port: 5432,
   });
   const client = await pool.connect();

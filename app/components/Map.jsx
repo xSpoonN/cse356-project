@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 export default function Map() {
   useEffect(() => {
     const map = L.map('map').setView([42, -74], 7);
-    L.tileLayer('http://localhost:8080/tile/{z}/{x}/{y}.png', {
+    L.tileLayer('http://localhost:3000/tiles/l{z}/{x}/{y}.png', {
       maxZoom: 25,
       minZoom: 4,
       attribution:

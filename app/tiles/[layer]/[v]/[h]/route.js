@@ -13,8 +13,9 @@ export async function GET(request, { params }) {
   const layer2 = layer.substring(1);
   /* console.log(`Requesting tile ${layer2}/${v}/${h}`); */
   const options = {
-    hostname: 'localhost',
-    port: 8080,
+    hostname:
+      process.env.BUILD_ENVIRONMENT === 'docker' ? 'tile-server' : 'localhost',
+    port: process.env.BUILD_ENVIRONMENT === 'docker' ? 80 : 8080,
     path: `/tile/${layer2}/${v}/${h}`,
     method: 'GET',
   };

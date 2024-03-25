@@ -21,4 +21,4 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-CMD npm run dev
+CMD BUILD_ENVIRONMENT=docker npm run dev

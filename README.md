@@ -6,7 +6,7 @@
 
 ## Development
 
-1. run `docker volume create osm-data && docker run -v '/absolute/path/to/region.osm.pbf' -v osm-data:/data/database overv/openstreetmap-tile-server import` (https://github.com/Overv/openstreetmap-tile-server)
+1. run `docker volume create osm-data && docker run -v '/absolute/path/to/new-york.osm.pbf:/data/region.osm.pbf' -v osm-data:/data/database overv/openstreetmap-tile-server import` (https://github.com/Overv/openstreetmap-tile-server)
 2. run `docker compose up` in the root directory
 
 ## Setting up new VM

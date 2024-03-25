@@ -31,6 +31,7 @@ export default function Map() {
   const [map, setMap] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [onlyInBox, setOnlyInBox] = useState(true); // Not used yet
+  const [searchResults, setSearchResults] = useState([]);
   const [bbox, setBbox] = useState({
     minLat: null,
     maxLat: null,
@@ -46,7 +47,7 @@ export default function Map() {
         'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       id: 'base',
     }).addTo(newMap);
-    newMap.on('moveend', () => {
+    newMap.on('dragend', () => {
       const bounds = newMap.getBounds();
       setBbox({
         minLat: bounds.getSouth(),
@@ -70,22 +71,33 @@ export default function Map() {
     });
     const data = await res.json();
     console.log(data); // Parse the data and add markers to the map
-    //console.log(Object.keys(strToObj(data[0].tags)));
     const parsedData = parseOSMPointRes(data);
-    console.log(parsedData);
+    setSearchResults(parsedData);
   };
 
   return (
     <div>
       <div id="map" style={{ height: '100vh', width: '100%' }} />
       <div
-        className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex"
+        className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
         style={{ zIndex: 9999 }}
       >
+        {/* Search Results */}
+        <div className="max-h-64 overflow-y-auto">
+          {searchResults.length
+            ? searchResults.map((result, index) => (
+                <div key={index} className="p-2 bg-gray-100 rounded-md mb-2">
+                  {result}
+                </div>
+              ))
+            : 'No results'}
+        </div>
+        {/* Search Input */}
         <input
           type="text"
           value={searchTerm}
           placeholder="Search"
+          className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           onChange={e => setSearchTerm(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter') search();

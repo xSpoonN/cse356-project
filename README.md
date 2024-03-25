@@ -28,11 +28,18 @@ CSE356_project
 │  │     └─ route.js
 │  ├─ components
 │  │  └─ Map.jsx
+│  ├─ convert
+│  │  └─ route.js
 │  ├─ globals.css
 │  ├─ layout.js
 │  ├─ lib
 │  │  └─ db.js
-│  └─ page.js
+│  ├─ page.js
+│  └─ tiles
+│     └─ [layer]
+│        └─ [v]
+│           └─ [h]
+│              └─ route.js
 ├─ docker-compose.prod.yml
 ├─ docker-compose.yml
 ├─ Dockerfile.dev
@@ -40,7 +47,6 @@ CSE356_project
 ├─ fluent.conf
 ├─ fluentd.Dockerfile
 ├─ jsconfig.json
-├─ new-york.osm.pbf
 ├─ next.config.mjs
 ├─ package-lock.json
 ├─ package.json
@@ -49,6 +55,7 @@ CSE356_project
 │  └─ tmp.txt
 ├─ README.md
 ├─ script
+│  ├─ osm2pgsql
 │  └─ provisioning
 │     ├─ cse356
 │     ├─ github

@@ -38,7 +38,10 @@ const Queries = {
 };
 
 export async function POST(request) {
-  const { bbox, onlyInBox, searchTerm } = request.body;
+  const { bbox, onlyInBox, searchTerm } = await request.json();
+  console.log(
+    `POST /search: { bbox: ${bbox}, onlyInBox: ${onlyInBox}, searchTerm: ${searchTerm} }`
+  );
 
   const client = await connect_db();
   const sql = Queries.TEST;

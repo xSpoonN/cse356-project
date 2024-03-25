@@ -83,7 +83,7 @@ export default function Map() {
         style={{ zIndex: 9999 }}
       >
         {/* Search Results */}
-        <div className="max-h-64 overflow-y-auto">
+        <div className="max-h-144 overflow-y-auto">
           {searchResults.length
             ? searchResults.map((result, index) => (
                 <div key={index} className="p-2 bg-gray-100 rounded-md mb-2">

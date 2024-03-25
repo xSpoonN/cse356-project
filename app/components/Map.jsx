@@ -1,22 +1,97 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+const strToObj = str => {
+  const pairs = str.split(', ');
+  const obj = {};
+  for (let i = 0; i < pairs.length; i++) {
+    let pair = pairs[i].split('"=>"');
+    obj[pair[0].trim().replace(/"/g, '')] = pair[1]?.trim().replace(/"/g, '');
+  }
+  return obj;
+};
+
+const parseOSMPointRes = data => {
+  return data.map(d => {
+    const tags = strToObj(d.tags);
+    const houseName = d['addr:housename'] || '';
+    const houseNumber = d['addr:housenumber'] || '';
+    const street = tags['addr:street'] || '';
+    const city = tags['addr:city'] || '';
+    const postcode = tags['addr:postcode'] || '';
+    const state = tags['addr:state'] || '';
+    return `${houseName ? houseName + ' ' : ''}${houseNumber} ${street}, ${city}, ${state} ${postcode}`;
+  });
+};
+
 export default function Map() {
+  const [map, setMap] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [onlyInBox, setOnlyInBox] = useState(true); // Not used yet
+  const [bbox, setBbox] = useState({
+    minLat: null,
+    maxLat: null,
+    minLong: null,
+    maxLong: null,
+  });
   useEffect(() => {
-    const map = L.map('map').setView([42, -74], 7);
+    const newMap = L.map('map').setView([42, -74], 7);
     L.tileLayer('http://localhost:3000/tiles/l{z}/{x}/{y}.png', {
       maxZoom: 25,
       minZoom: 4,
       attribution:
         'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       id: 'base',
-    }).addTo(map);
+    }).addTo(newMap);
+    newMap.on('moveend', () => {
+      const bounds = newMap.getBounds();
+      setBbox({
+        minLat: bounds.getSouth(),
+        maxLat: bounds.getNorth(),
+        minLong: bounds.getWest(),
+        maxLong: bounds.getEast(),
+      });
+    });
+    setMap(newMap);
 
-    return () => map.remove();
+    return () => newMap.remove();
   }, []);
 
-  return <div id="map" style={{ height: '100vh', width: '100%' }} />;
+  const search = async () => {
+    const res = await fetch('http://localhost:3000/api/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ bbox, onlyInBox, searchTerm }),
+    });
+    const data = await res.json();
+    console.log(data); // Parse the data and add markers to the map
+    //console.log(Object.keys(strToObj(data[0].tags)));
+    const parsedData = parseOSMPointRes(data);
+    console.log(parsedData);
+  };
+
+  return (
+    <div>
+      <div id="map" style={{ height: '100vh', width: '100%' }} />
+      <div
+        className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex"
+        style={{ zIndex: 9999 }}
+      >
+        <input
+          type="text"
+          value={searchTerm}
+          placeholder="Search"
+          onChange={e => setSearchTerm(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') search();
+          }}
+        />
+      </div>
+    </div>
+  );
 }

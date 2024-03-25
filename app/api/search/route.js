@@ -35,16 +35,22 @@ const Queries = {
          WHERE tags->'addr:street' LIKE '%Circle Road%'\
          AND tags->'addr:city' = 'Stony Brook'\
          LIMIT 1000",
+  SEARCH:
+    "SELECT * FROM planet_osm_point\
+           WHERE LOWER(tags->'addr:street') LIKE LOWER('%$1%')\
+           OR LOWER(tags->'addr:city') LIKE LOWER('%$1%')\
+           LIMIT 1000",
 };
 
 export async function POST(request) {
   const { bbox, onlyInBox, searchTerm } = await request.json();
   console.log(
-    `POST /search: { bbox: ${bbox}, onlyInBox: ${onlyInBox}, searchTerm: ${searchTerm} }`
+    `POST /search: ${JSON.stringify({ bbox, onlyInBox, searchTerm })}`
   );
 
   const client = await connect_db();
-  const sql = Queries.TEST;
+  const sql = Queries.SEARCH.replace(/\$1/g, searchTerm);
+  console.log(sql);
 
   try {
     const res = await client.query(sql);

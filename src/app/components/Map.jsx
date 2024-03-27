@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
 export default function Map() {
   const [map, setMap] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [onlyInBox, setOnlyInBox] = useState(true); // Not used yet
+  const [onlyInBox, setOnlyInBox] = useState(false); // Not used yet
   const [searchResults, setSearchResults] = useState([]);
   const markerLayerRef = useRef(null);
   const [bbox, setBbox] = useState({
@@ -60,6 +60,15 @@ export default function Map() {
     return () => newMap.remove();
   }, []);
 
+  function calcFlyDuration(lat, lon) {
+    return Math.min(
+      2,
+      (map.getCenter().distanceTo([lat, lon]) / 1000000) * 3 +
+        1 +
+        Math.abs(map.getZoom() - 15) * 0.5
+    );
+  }
+
   const search = async () => {
     const res = await fetch('/api/search', {
       method: 'POST',
@@ -73,17 +82,28 @@ export default function Map() {
   };
 
   useEffect(() => {
+    markerLayerRef.current.clearLayers();
     if (onlyInBox) {
-      markerLayerRef.current.clearLayers();
       searchResults.forEach(result => {
         L.marker([result.coordinates.lat, result.coordinates.lon])
           .addTo(markerLayerRef.current)
           .bindPopup(result.name);
       });
-    } else {
-      if (searchResults.length === 1) {
-        // map.setView([searchResults[0].coordinates.lat, searchResults[0].coordinates.lon], 10);
-      }
+      return;
+    }
+    if (searchResults.length === 1) {
+      map.flyTo(
+        [searchResults[0].coordinates.lat, searchResults[0].coordinates.lon],
+        15,
+        {
+          duration: calcFlyDuration(
+            searchResults[0].coordinates.lat,
+            searchResults[0].coordinates.lon
+          ),
+          easeLinearity: 0.5,
+          animate: true,
+        }
+      );
     }
   }, [searchResults]);
 
@@ -98,7 +118,24 @@ export default function Map() {
           {searchTerm &&
             (searchResults.length
               ? searchResults.map((result, index) => (
-                  <div key={index} className="p-2 bg-gray-100 rounded-md mb-2">
+                  <div
+                    key={index}
+                    className="p-2 bg-gray-100 rounded-md mb-2"
+                    onClick={() => {
+                      map.flyTo(
+                        [result.coordinates.lat, result.coordinates.lon],
+                        15,
+                        {
+                          duration: calcFlyDuration(
+                            result.coordinates.lat,
+                            result.coordinates.lon
+                          ),
+                          easeLinearity: 0.5,
+                          animate: true,
+                        }
+                      );
+                    }}
+                  >
                     {result.name}
                   </div>
                 ))

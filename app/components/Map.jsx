@@ -70,6 +70,20 @@ export default function Map() {
     setSearchResults(Object.values(data));
   };
 
+  useEffect(() => {
+    if (onlyInBox) {
+      searchResults.forEach(result => {
+        L.marker([result.coordinates.lat, result.coordinates.lon])
+          .addTo(map)
+          .bindPopup(result.name);
+      });
+    } else {
+      if (searchResults.length === 1) {
+        // map.setView([searchResults[0].coordinates.lat, searchResults[0].coordinates.lon], 10);
+      }
+    }
+  }, [searchResults]);
+
   return (
     <div>
       <div

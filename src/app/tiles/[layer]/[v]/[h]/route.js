@@ -1,4 +1,5 @@
 import http from 'http';
+import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
   const { layer, v, h } = params;
@@ -8,7 +9,7 @@ export async function GET(request, { params }) {
     isNaN(parseInt(v)) ||
     isNaN(parseInt(h))
   ) {
-    return new Response('Not Found', { status: 404 });
+    return new NextResponse('Not Found', { status: 404 });
   }
   const layer2 = layer.substring(1);
   /* console.log(`Requesting tile ${layer2}/${v}/${h}`); */

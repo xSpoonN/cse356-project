@@ -17,7 +17,5 @@ export async function POST(request) {
       Math.pow(2, zoom)
   );
   console.log(`res: { x_tile: ${x_tile}, y_tile: ${y_tile} }`);
-  const res = NextResponse.json({ x_tile, y_tile });
-  res.headers.set('X-cse356', '65b99ec7c9f3cb0d090f2236');
-  return res;
+  return NextResponse.json({ x_tile, y_tile });
 }

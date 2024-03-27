@@ -9,7 +9,7 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-COPY app/ ./app/
+COPY ./src/ ./src/
 COPY public/ ./public/
 COPY ./next.config.mjs ./
 

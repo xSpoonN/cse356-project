@@ -3,29 +3,15 @@
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import MarkerIcon from 'leaflet/dist/images/marker-icon.png';
+import MarkerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import MarkerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-const strToObj = str => {
-  const pairs = str.split(', ');
-  const obj = {};
-  for (let i = 0; i < pairs.length; i++) {
-    let pair = pairs[i].split('"=>"');
-    obj[pair[0].trim().replace(/"/g, '')] = pair[1]?.trim().replace(/"/g, '');
-  }
-  return obj;
-};
-
-const parseOSMPointRes = data => {
-  return data.map(d => {
-    const tags = strToObj(d.tags);
-    const houseName = d['addr:housename'] || '';
-    const houseNumber = d['addr:housenumber'] || '';
-    const street = tags['addr:street'] || '';
-    const city = tags['addr:city'] || '';
-    const postcode = tags['addr:postcode'] || '';
-    const state = tags['addr:state'] || '';
-    return `${houseName ? houseName + ' ' : ''}${houseNumber} ${street}, ${city}, ${state} ${postcode}`;
-  });
-};
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: MarkerIcon2x.src,
+  iconUrl: MarkerIcon.src,
+  shadowUrl: MarkerShadow.src,
+});
 
 export default function Map() {
   const [map, setMap] = useState(null);
@@ -38,6 +24,7 @@ export default function Map() {
     minLong: null,
     maxLong: null,
   });
+
   useEffect(() => {
     const newMap = L.map('map').setView([42, -74], 7);
     L.tileLayer('http://localhost:3000/tiles/l{z}/{x}/{y}.png', {
@@ -47,14 +34,24 @@ export default function Map() {
         'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       id: 'base',
     }).addTo(newMap);
-    newMap.on('dragend', () => {
+
+    const updateBbox = () => {
       const bounds = newMap.getBounds();
+      const southWest = bounds.getSouthWest();
+      const northEast = bounds.getNorthEast();
+
       setBbox({
-        minLat: bounds.getSouth(),
-        maxLat: bounds.getNorth(),
-        minLong: bounds.getWest(),
-        maxLong: bounds.getEast(),
+        minLat: southWest.lat,
+        maxLat: northEast.lat,
+        minLon: southWest.lng,
+        maxLon: northEast.lng,
       });
+    };
+
+    updateBbox();
+
+    newMap.on('dragend', () => {
+      updateBbox();
     });
     setMap(newMap);
 
@@ -62,7 +59,7 @@ export default function Map() {
   }, []);
 
   const search = async () => {
-    const res = await fetch('http://localhost:3000/api/search', {
+    const res = await fetch('/api/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,14 +67,11 @@ export default function Map() {
       body: JSON.stringify({ bbox, onlyInBox, searchTerm }),
     });
     const data = await res.json();
-    console.log(data); // Parse the data and add markers to the map
-    const parsedData = parseOSMPointRes(data);
-    setSearchResults(parsedData);
+    setSearchResults(Object.values(data));
   };
 
   return (
     <div>
-      <div id="map" style={{ height: '100vh', width: '100%' }} />
       <div
         className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
         style={{ zIndex: 9999 }}
@@ -87,7 +81,7 @@ export default function Map() {
           {searchResults.length
             ? searchResults.map((result, index) => (
                 <div key={index} className="p-2 bg-gray-100 rounded-md mb-2">
-                  {result}
+                  {result.name}
                 </div>
               ))
             : 'No results'}
@@ -103,7 +97,17 @@ export default function Map() {
             if (e.key === 'Enter') search();
           }}
         />
+
+        <label htmlFor="onlyInBox">Only in Box</label>
+        <input
+          type="checkbox"
+          name="onlyInBox"
+          id="onlyInBox"
+          onChange={e => setOnlyInBox(e.target.checked)}
+        />
       </div>
+
+      <div id="map" style={{ height: '100vh', width: '100%' }} />
     </div>
   );
 }

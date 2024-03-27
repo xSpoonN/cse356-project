@@ -1,62 +1,130 @@
 import { NextResponse } from 'next/server';
 import { connect_db } from '../../lib/db.js';
 
-/*  All Tables:
-    { table_name: 'spatial_ref_sys' },
-    { table_name: 'geography_columns' },
-    { table_name: 'geometry_columns' },
-    { table_name: 'icesheet_outlines' },
-    { table_name: 'water_polygons' },
-    { table_name: 'planet_osm_nodes' },
-    { table_name: 'planet_osm_ways' },
-    { table_name: 'planet_osm_rels' },
-    { table_name: 'planet_osm_point' },
-    { table_name: 'planet_osm_line' },
-    { table_name: 'ne_110m_admin_0_boundary_lines_land' },
-    { table_name: 'planet_osm_polygon' },
-    { table_name: 'external_data' },
-    { table_name: 'icesheet_polygons' },
-    { table_name: 'planet_osm_roads' },
-    { table_name: 'simplified_water_polygons' } */
-
-// planet_osm_point Seems to be houses and landmarks and shops etc.
-// Relevant fields: addr:housename, addr:housenumber, tags. - Tags has a bunch of other addr fields that aren't columns for some reason
-// "addr:city"=>"Peconic", "addr:state"=>"NY", "addr:street"=>"Mill Lane", "addr:postcode"=>"11958", "nysgissam:review"=>"existing element's addr:postcode has different addr:postcode", "nysgissam:nysaddresspointid"=>"SUFF209932"
-// Need to figure out what the nysgissam stuff means and if we need to change anything.
-
-const Queries = {
-  TABLENAMES:
-    "SELECT table_name FROM information_schema.tables\
-               WHERE table_schema='public'",
-  GEOGRAPHY: 'SELECT * FROM geography_columns', // This one is empty lol
-  GEOMETRY: 'SELECT * FROM geometry_columns', // Map geometry, probably not useful
-  POINTS: "SELECT * FROM 'planet_osm_point' LIMIT 100;",
-  TEST: "SELECT * FROM planet_osm_point\
-         WHERE tags->'addr:street' LIKE '%Circle Road%'\
-         AND tags->'addr:city' = 'Stony Brook'\
-         LIMIT 1000",
-  SEARCH:
-    "SELECT * FROM planet_osm_point\
-           WHERE LOWER(tags->'addr:street') LIKE LOWER('%$1%')\
-           OR LOWER(tags->'addr:city') LIKE LOWER('%$1%')\
-           LIMIT 1000",
-};
-
 export async function POST(request) {
   const { bbox, onlyInBox, searchTerm } = await request.json();
+  const { minLat, minLon, maxLat, maxLon } = bbox;
   console.log(
     `POST /search: ${JSON.stringify({ bbox, onlyInBox, searchTerm })}`
   );
 
-  const client = await connect_db();
-  const sql = Queries.SEARCH.replace(/\$1/g, searchTerm);
+  // Build search query
+  let sql = ``;
+  if (onlyInBox) {
+    console.log('Searching only in box');
+    sql = `SELECT 
+      name, 
+      ST_X(ST_Transform(way,4326)) as lon, 
+      ST_Y(ST_Transform(way,4326)) as lat
+    FROM 
+      planet_osm_point 
+    WHERE 
+      LOWER(name) LIKE LOWER('%${searchTerm}%') AND ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
+    UNION
+
+    SELECT
+      name, 
+      ST_X(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lon,
+      ST_Y(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lat
+    FROM 
+      planet_osm_line 
+    WHERE LOWER(name) LIKE LOWER('%${searchTerm}%') AND ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
+    UNION
+
+    SELECT 
+      name, 
+      ST_X(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lon,
+      ST_Y(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lat
+    FROM
+      planet_osm_polygon 
+    WHERE LOWER(name) LIKE LOWER('%${searchTerm}%') AND ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
+    LIMIT 30;`;
+  } else {
+    console.log('Searching everywhere');
+    sql = `
+    SELECT 
+      name, 
+      ST_X(ST_Transform(way,4326)) as lon, 
+      ST_Y(ST_Transform(way,4326)) as lat,
+      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
+      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
+      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
+      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat
+    FROM 
+      planet_osm_point 
+    WHERE
+      LOWER(name) LIKE LOWER('%${searchTerm}%') 
+    UNION
+
+    SELECT 
+      name, 
+      ST_X(ST_Centroid(ST_Transform(way,4326))) as lon, 
+      ST_Y(ST_Centroid(ST_Transform(way,4326))) as lat,
+      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
+      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
+      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
+      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat
+    FROM 
+      planet_osm_line 
+    WHERE 
+      LOWER(name) LIKE LOWER('%${searchTerm}%') 
+    UNION
+
+    SELECT 
+      name, 
+      ST_X(ST_Centroid(ST_Transform(way,4326))) as lon, 
+      ST_Y(ST_Centroid(ST_Transform(way,4326))) as lat,
+      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
+      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
+      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
+      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat
+    FROM 
+        planet_osm_polygon
+    WHERE LOWER(name) LIKE LOWER('%${searchTerm}%')
+    LIMIT 30;`;
+  }
   console.log(sql);
 
+  const client = await connect_db();
   try {
-    const res = await client.query(sql);
-    console.log(`${res.rows.length} rows returned`);
+    let res = await client.query(sql);
+
+    if (onlyInBox) {
+      res = res.rows.map(row => {
+        return {
+          name: row.name,
+          coordinates: {
+            lon: row.lon,
+            lat: row.lat,
+          },
+          bbox: {
+            minLat,
+            minLon,
+            maxLat,
+            maxLon,
+          },
+        };
+      });
+    } else {
+      res = res.rows.map(row => {
+        return {
+          name: row.name,
+          coordinates: {
+            lon: row.lon,
+            lat: row.lat,
+          },
+          bbox: {
+            minLat: row.minlat,
+            minLon: row.minlon,
+            maxLat: row.maxlat,
+            maxLon: row.maxlon,
+          },
+        };
+      });
+    }
+
     client.release();
-    return NextResponse.json(res.rows);
+    return NextResponse.json(res);
   } catch (err) {
     console.error(err);
     client.release();

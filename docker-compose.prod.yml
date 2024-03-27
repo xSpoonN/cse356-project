@@ -2,39 +2,81 @@ services:
   next:
     container_name: next
     build:
-      context: .
-      dockerfile: Dockerfile.prod
+      context: ./
+      dockerfile: ./docker/Dockerfile.prod
+    image: 127.0.0.1:5000/next
     ports:
-      - "3000:3000"
+      - "80:80"
     restart: always
     depends_on:
       - fluentd
     logging:
       driver: "fluentd"
       options:
-        fluentd-address: localhost:24224
+        fluentd-address: 127.0.0.1:24224
         tag: next.access
         fluentd-async-connect: "true"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
   tile-server:
-    image: overv/openstreetmap-tile-server
+    container_name: tile-server
+    build:
+      context: ./
+      dockerfile: ./docker/tile-server.Dockerfile
+    image: 127.0.0.1:5000/tile-server
     volumes:
       - osm-data:/data/database/
     ports:
       - "8080:80"
       - "5432:5432"
-    command: "run"
+    environment:
+      DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
   fluentd:
     container_name: fluentd
     build:
       context: ./
-      dockerfile: fluentd.Dockerfile
+      dockerfile: ./docker/fluentd.Dockerfile
+    image: 127.0.0.1:5000/fluentd
     volumes:
       - ./logs/:/var/log/fluentd/
     ports:
       - "24224:24224"
       - "24224:24224/udp"
     restart: always
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+  nominatim:
+    container_name: nominatim
+    image: mediagis/nominatim:4.4
+    ports:
+      - "9090:8080"
+    environment:
+      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
+      NOMINATIM_PASSWORD: mysecretpassword
+      POSTGRES_SHARED_BUFFERS: 2GB # 25% of total memory
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB 
+      POSTGRES_AUTOVACUUM_WORK_MEM: 2GB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 4294967296 # half of total memory
+    restart: always
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
 
 volumes:
   osm-data:
-    external: true
+  nominatim-data:

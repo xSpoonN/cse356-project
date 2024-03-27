@@ -1,101 +1,57 @@
 import { NextResponse } from 'next/server';
-import { connect_db } from '../../lib/db.js';
 
+function calculateDistance(location, center) {
+  return cosineDistanceBetweenPoints(
+    parseFloat(center[0]),
+    parseFloat(center[1]),
+    parseFloat(location.lat),
+    parseFloat(location.lon)
+  );
+}
+function cosineDistanceBetweenPoints(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const p1 = (lat1 * Math.PI) / 180;
+  const p2 = (lat2 * Math.PI) / 180;
+  const deltaP = p2 - p1;
+  const deltaLon = lon2 - lon1;
+  const deltaLambda = (deltaLon * Math.PI) / 180;
+  const a =
+    Math.sin(deltaP / 2) * Math.sin(deltaP / 2) +
+    Math.cos(p1) *
+      Math.cos(p2) *
+      Math.sin(deltaLambda / 2) *
+      Math.sin(deltaLambda / 2);
+  const d = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * R;
+  return d;
+}
 export async function POST(request) {
   const { bbox, onlyInBox, searchTerm } = await request.json();
   const { minLat, minLon, maxLat, maxLon } = bbox;
+  const boxCenter = [
+    (parseFloat(minLat) + parseFloat(maxLat)) / 2,
+    (parseFloat(minLon) + parseFloat(maxLon)) / 2,
+  ];
   console.log(
     `POST /search: ${JSON.stringify({ bbox, onlyInBox, searchTerm })}`
   );
 
   // Build search query
-  let sql = ``;
+  let query = `http://${process.env.BUILD_ENVIRONMENT === 'docker' ? 'nominatim:8080' : 'localhost:9090'}/search?q=${searchTerm}`;
   if (onlyInBox) {
-    console.log('Searching only in box');
-    sql = `SELECT 
-      name, 
-      ST_X(ST_Transform(way,4326)) as lon, 
-      ST_Y(ST_Transform(way,4326)) as lat
-    FROM 
-      planet_osm_point 
-    WHERE 
-      LOWER(name) LIKE LOWER('%${searchTerm}%') AND ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
-    UNION
-
-    SELECT
-      name, 
-      ST_X(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lon,
-      ST_Y(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lat
-    FROM 
-      planet_osm_line 
-    WHERE LOWER(name) LIKE LOWER('%${searchTerm}%') AND ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
-    UNION
-
-    SELECT 
-      name, 
-      ST_X(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lon,
-      ST_Y(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lat
-    FROM
-      planet_osm_polygon 
-    WHERE LOWER(name) LIKE LOWER('%${searchTerm}%') AND ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
-    LIMIT 30;`;
-  } else {
-    console.log('Searching everywhere');
-    sql = `
-    SELECT 
-      name, 
-      ST_X(ST_Transform(way,4326)) as lon, 
-      ST_Y(ST_Transform(way,4326)) as lat,
-      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
-      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
-      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
-      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat
-    FROM 
-      planet_osm_point 
-    WHERE
-      LOWER(name) LIKE LOWER('%${searchTerm}%') 
-    UNION
-
-    SELECT 
-      name, 
-      ST_X(ST_Centroid(ST_Transform(way,4326))) as lon, 
-      ST_Y(ST_Centroid(ST_Transform(way,4326))) as lat,
-      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
-      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
-      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
-      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat
-    FROM 
-      planet_osm_line 
-    WHERE 
-      LOWER(name) LIKE LOWER('%${searchTerm}%') 
-    UNION
-
-    SELECT 
-      name, 
-      ST_X(ST_Centroid(ST_Transform(way,4326))) as lon, 
-      ST_Y(ST_Centroid(ST_Transform(way,4326))) as lat,
-      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
-      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
-      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
-      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat
-    FROM 
-        planet_osm_polygon
-    WHERE LOWER(name) LIKE LOWER('%${searchTerm}%')
-    LIMIT 30;`;
+    query += `&viewbox=${minLon},${minLat},${maxLon},${maxLat}&bounded=1`;
   }
-  //console.log(sql);
 
-  const client = await connect_db();
   try {
-    let res = await client.query(sql);
+    let res = await (await fetch(query)).json();
+    console.log('result: ', res);
 
     if (onlyInBox) {
-      res = res.rows.map(row => {
+      res = res.map(row => {
         return {
-          name: row.name,
+          name: row.display_name,
           coordinates: {
-            lon: row.lon,
-            lat: row.lat,
+            lon: parseFloat(row.lon),
+            lat: parseFloat(row.lat),
           },
           bbox: {
             minLat,
@@ -103,31 +59,39 @@ export async function POST(request) {
             maxLat,
             maxLon,
           },
+          distance: calculateDistance(row, boxCenter),
         };
       });
     } else {
-      res = res.rows.map(row => {
+      res = res.map(row => {
+        const [minLat, maxLat, minLon, maxLon] = row.boundingbox;
         return {
-          name: row.name,
+          name: row.display_name,
           coordinates: {
-            lon: row.lon,
-            lat: row.lat,
+            lon: parseFloat(row.lon),
+            lat: parseFloat(row.lat),
           },
           bbox: {
-            minLat: row.minlat,
-            minLon: row.minlon,
-            maxLat: row.maxlat,
-            maxLon: row.maxlon,
+            minLat: parseFloat(minLat),
+            minLon: parseFloat(minLon),
+            maxLat: parseFloat(maxLat),
+            maxLon: parseFloat(maxLon),
           },
+          distance: calculateDistance(row, boxCenter),
         };
       });
     }
+    res.sort((a, b) => a.distance - b.distance);
+    console.log('Returned result: ', res);
 
-    client.release();
+    res = res.map(row => {
+      delete row.distance;
+      return row;
+    });
+
     return NextResponse.json(res);
   } catch (err) {
     console.error(err);
-    client.release();
     return NextResponse.error(err);
   }
 }

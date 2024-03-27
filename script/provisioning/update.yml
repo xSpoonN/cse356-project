@@ -1,0 +1,33 @@
+---
+- name: Setup VMs
+  hosts: swarm_manager
+  become: yes
+  vars:
+    target_branch: test/nominatim
+
+  tasks:
+    - name: Remove the currently running stack
+      shell: docker stack rm milestone_1
+      ignore_errors: true
+
+    - name: Pull the new change from the remote repo
+      git:
+        repo: "git@github.com:goodgoed/CSE356_project.git"
+        dest: "/root/project"
+        accept_hostkey: yes
+        key_file: "~/.ssh/github"
+        force: yes
+    
+    - name: Switch to another branch
+      shell: git switch {{ target_branch }}
+      args:
+        chdir: "/root/project"
+    
+    - name: Build images
+      shell: docker compose -f /root/project/docker-compose.prod.yml build
+
+    - name: Push images to local registry
+      shell: docker compose -f /root/project/docker-compose.prod.yml push
+
+    - name: Deploy stack to Docker Swarm
+      shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_1 --detach=true

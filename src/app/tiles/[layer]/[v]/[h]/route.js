@@ -3,15 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
   const { layer, v, h } = params;
-  if (
-    layer.substring(0, 1) !== 'l' ||
-    isNaN(parseInt(layer.substring(1))) ||
-    isNaN(parseInt(v)) ||
-    isNaN(parseInt(h))
-  ) {
+  if (isNaN(parseInt(v)) || isNaN(parseInt(h))) {
     return new NextResponse('Not Found', { status: 404 });
   }
-  const layer2 = layer.substring(1);
+  const layer2 = layer.substring(0, 1) == 'l' ? layer.substring(1) : layer;
   /* console.log(`Requesting tile ${layer2}/${v}/${h}`); */
   const options = {
     hostname:

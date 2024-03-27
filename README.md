@@ -1,19 +1,15 @@
-## TODO
-
-- [x] CI/CD
-- [x] Create a script to store `.osm.pbf` file to Postgres (use `osm2pg`)
-- [x] Setup logger (fluentd) 
-
 ## Development
-
-1. run `docker volume create osm-data && docker run -v '/absolute/path/to/new-york.osm.pbf:/data/region.osm.pbf' -v osm-data:/data/database overv/openstreetmap-tile-server import` (https://github.com/Overv/openstreetmap-tile-server)
-2. run `docker compose up` in the root directory
+run `docker compose up` in the root directory
 
 ## Setting up new VM
-1. copy IP address of the new VM
-2. `cd` into script/provisioning
-3. change `ansible_host` to new IP address
-4. run `ansible-playbook -i inventory.ini new-vm-setup.yml` 
+1. Create 1 machine with 1 core 1gb memory and 2 machines with 2 core 4gb memory
+2. Write 1gb memory machine's ip address to manager and 4gb memory machine's ip address as workers in `inventory.ini`
+4. `cd` into script/provisioning
+5. run `ansible-playbook -i inventory.ini deploy.yml`
+6. ssh into mananger node and change the endpoint specified in `Map.jsx`
+7. Run `docker compose -f /root/project/docker-compose.prod.yml build`
+8. Run `docker compose -f /root/project/docker-compose.prod.yml push`
+9. Run `docker stack deploy -c /root/project/docker-compose.prod.yml milestone_1 --detach=true`
 
 ```
 CSE356_project

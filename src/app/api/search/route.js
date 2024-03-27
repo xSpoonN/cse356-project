@@ -83,7 +83,7 @@ export async function POST(request) {
     WHERE LOWER(name) LIKE LOWER('%${searchTerm}%')
     LIMIT 30;`;
   }
-  console.log(sql);
+  //console.log(sql);
 
   const client = await connect_db();
   try {

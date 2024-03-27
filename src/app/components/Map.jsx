@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import MarkerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -18,6 +18,7 @@ export default function Map() {
   const [searchTerm, setSearchTerm] = useState('');
   const [onlyInBox, setOnlyInBox] = useState(true); // Not used yet
   const [searchResults, setSearchResults] = useState([]);
+  const markerLayerRef = useRef(null);
   const [bbox, setBbox] = useState({
     minLat: null,
     maxLat: null,
@@ -34,6 +35,7 @@ export default function Map() {
         'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       id: 'base',
     }).addTo(newMap);
+    markerLayerRef.current = L.featureGroup().addTo(newMap);
 
     const updateBbox = () => {
       const bounds = newMap.getBounds();
@@ -72,9 +74,10 @@ export default function Map() {
 
   useEffect(() => {
     if (onlyInBox) {
+      markerLayerRef.current.clearLayers();
       searchResults.forEach(result => {
         L.marker([result.coordinates.lat, result.coordinates.lon])
-          .addTo(map)
+          .addTo(markerLayerRef.current)
           .bindPopup(result.name);
       });
     } else {
@@ -92,13 +95,14 @@ export default function Map() {
       >
         {/* Search Results */}
         <div className="max-h-144 overflow-y-auto">
-          {searchResults.length
-            ? searchResults.map((result, index) => (
-                <div key={index} className="p-2 bg-gray-100 rounded-md mb-2">
-                  {result.name}
-                </div>
-              ))
-            : 'No results'}
+          {searchTerm &&
+            (searchResults.length
+              ? searchResults.map((result, index) => (
+                  <div key={index} className="p-2 bg-gray-100 rounded-md mb-2">
+                    {result.name}
+                  </div>
+                ))
+              : 'No results')}
         </div>
         {/* Search Input */}
         <input
@@ -112,13 +116,16 @@ export default function Map() {
           }}
         />
 
-        <label htmlFor="onlyInBox">Only in Box</label>
-        <input
-          type="checkbox"
-          name="onlyInBox"
-          id="onlyInBox"
-          onChange={e => setOnlyInBox(e.target.checked)}
-        />
+        <div className="flex justify-between items-center mt-2">
+          <label htmlFor="onlyInBox">Only in Box</label>
+          <input
+            type="checkbox"
+            name="onlyInBox"
+            id="onlyInBox"
+            className="transform scale-125 mr-2"
+            onChange={e => setOnlyInBox(e.target.checked)}
+          />
+        </div>
       </div>
 
       <div id="map" style={{ height: '100vh', width: '100%' }} />

@@ -27,38 +27,43 @@ export default function Map() {
   });
 
   useEffect(() => {
-    const newMap = L.map('map').setView([42, -74], 7);
+    const newMap = L.map('map', { attributionControl: false }).setView(
+      [42, -74],
+      7
+    );
     L.tileLayer('http://localhost:3000/tiles/l{z}/{x}/{y}.png', {
       maxZoom: 25,
       minZoom: 4,
-      attribution:
-        'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       id: 'base',
     }).addTo(newMap);
     markerLayerRef.current = L.featureGroup().addTo(newMap);
 
-    const updateBbox = () => {
-      const bounds = newMap.getBounds();
-      const southWest = bounds.getSouthWest();
-      const northEast = bounds.getNorthEast();
-
-      setBbox({
-        minLat: southWest.lat,
-        maxLat: northEast.lat,
-        minLon: southWest.lng,
-        maxLon: northEast.lng,
-      });
-    };
-
-    updateBbox();
+    updateBbox(newMap);
 
     newMap.on('dragend', () => {
-      updateBbox();
+      updateBbox(newMap);
     });
+    newMap.on('moveend', () => {
+      updateBbox(newMap);
+    });
+
     setMap(newMap);
 
     return () => newMap.remove();
   }, []);
+
+  function updateBbox(map) {
+    const bounds = map.getBounds();
+    const southWest = bounds.getSouthWest();
+    const northEast = bounds.getNorthEast();
+
+    setBbox({
+      minLat: southWest.lat,
+      maxLat: northEast.lat,
+      minLon: southWest.lng,
+      maxLon: northEast.lng,
+    });
+  }
 
   function calcFlyDuration(lat, lon) {
     return Math.min(
@@ -78,6 +83,7 @@ export default function Map() {
       body: JSON.stringify({ bbox, onlyInBox, searchTerm }),
     });
     const data = await res.json();
+    console.log('data: ', data);
     setSearchResults(Object.values(data));
   };
 
@@ -108,39 +114,11 @@ export default function Map() {
   }, [searchResults]);
 
   return (
-    <div>
+    <div className="flex w-full">
       <div
-        className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
+        className="basis-1/3 bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
         style={{ zIndex: 9999 }}
       >
-        {/* Search Results */}
-        <div className="max-h-144 overflow-y-auto">
-          {searchTerm &&
-            (searchResults.length
-              ? searchResults.map((result, index) => (
-                  <div
-                    key={index}
-                    className="p-2 bg-gray-100 rounded-md mb-2"
-                    onClick={() => {
-                      map.flyTo(
-                        [result.coordinates.lat, result.coordinates.lon],
-                        15,
-                        {
-                          duration: calcFlyDuration(
-                            result.coordinates.lat,
-                            result.coordinates.lon
-                          ),
-                          easeLinearity: 0.5,
-                          animate: true,
-                        }
-                      );
-                    }}
-                  >
-                    {result.name}
-                  </div>
-                ))
-              : 'No results')}
-        </div>
         {/* Search Input */}
         <input
           type="text"
@@ -163,9 +141,37 @@ export default function Map() {
             onChange={e => setOnlyInBox(e.target.checked)}
           />
         </div>
+        {/* Search Results */}
+        <div className="max-h-144 overflow-y-auto">
+          {searchTerm &&
+            (searchResults.length
+              ? searchResults.map((result, index) => (
+                  <div
+                    key={index}
+                    className="p-2 bg-gray-100 rounded-md mb-2 cursor-pointer hover:bg-gray-200"
+                    onClick={() => {
+                      map.flyTo(
+                        [result.coordinates.lat, result.coordinates.lon],
+                        15,
+                        {
+                          duration: calcFlyDuration(
+                            result.coordinates.lat,
+                            result.coordinates.lon
+                          ),
+                          easeLinearity: 0.5,
+                          animate: true,
+                        }
+                      );
+                    }}
+                  >
+                    {result.name}
+                  </div>
+                ))
+              : 'No results')}
+        </div>
       </div>
 
-      <div id="map" style={{ height: '100vh', width: '100%' }} />
+      <div id="map" className="basis-2/3" style={{ height: '100vh' }} />
     </div>
   );
 }

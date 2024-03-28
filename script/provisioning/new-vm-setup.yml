@@ -85,13 +85,3 @@
         key_file: "~/.ssh/github"
         accept_hostkey: yes
         force: yes
-
-    - name: Download osm.pbf file from URL
-      ansible.builtin.get_url:
-        url: "https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf"
-        dest: "~/project" 
-        mode: '0644'
-
-    - name: import osm.pbf file into postgres
-      command: "docker volume create osm-data && docker run -v '/root/project/new-york.osm.pbf:/data/region.osm.pbf' -v osm-data:/data/database overv/openstreetmap-tile-server import"
-      become: yes

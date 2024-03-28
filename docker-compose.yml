@@ -2,8 +2,8 @@ services:
   next:
     container_name: next
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ./
+      dockerfile: ./docker/Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
@@ -20,18 +20,21 @@ services:
         fluentd-async-connect: "true"
     restart: always
   tile-server:
-    image: overv/openstreetmap-tile-server
+    build:
+      context: ./
+      dockerfile: ./docker/tile-server.Dockerfile
     volumes:
-      - osm-data:/data/database/
+      - tile-server-data:/data/database/
     ports:
       - "8080:80"
       - "5432:5432"
-    command: "run"
+    environment:
+      DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
   fluentd:
     container_name: fluentd
     build:
       context: ./
-      dockerfile: fluentd.Dockerfile
+      dockerfile: ./docker/fluentd.Dockerfile
     volumes:
       - ./logs/:/var/log/fluentd/
     ports:
@@ -42,15 +45,14 @@ services:
     container_name: nominatim
     image: mediagis/nominatim:4.4
     ports:
-        - "9090:8080"
+      - "9090:8080"
     environment:
-        PBF_PATH: /nominatim/data/new-york.osm.pbf
-        NOMINATIM_PASSWORD: mysecretpassword
+      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
+      NOMINATIM_PASSWORD: mysecretpassword
     volumes:
-      - ./new-york.osm.pbf:/nominatim/data/new-york.osm.pbf
       - nominatim-data:/var/lib/postgresql/14/main
-    shm_size: 64MB
+    shm_size: 2gb
 
 volumes:
-  osm-data:
+  tile-server-data:
   nominatim-data:

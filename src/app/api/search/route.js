@@ -32,92 +32,10 @@ export async function POST(request) {
   );
 
   // Build search query
-  let sql = ``;
+  let query = `http://${process.env.BUILD_ENVIRONMENT === 'docker' ? 'nominatim:8080' : 'localhost:9090'}/api/search?q=${searchTerm}`;
   if (onlyInBox) {
     console.log('Searching only in box');
-    sql = `SELECT 
-      'point' as type,
-      name, 
-      ST_X(ST_Transform(way,4326)) as lon, 
-      ST_Y(ST_Transform(way,4326)) as lat,
-      ST_Distance(
-        ST_Transform(way, 4326)::geography, 
-        ST_SetSRID(ST_MakePoint(${boxCenter[1]}, ${boxCenter[0]}), 4326)::geography
-      ) AS distance,
-      "addr:housenumber" as housenumber,
-      tags->'addr:street' as street
-    FROM 
-      planet_osm_point 
-    WHERE
-      (LOWER(name) LIKE LOWER('%${searchTerm}%') OR
-      ("addr:housenumber" = '${housenumber}' AND
-      LOWER(tags->'addr:street') LIKE LOWER('${street}'))) AND 
-      ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
-    UNION
-
-    SELECT
-      'polygon' as type,
-      name, 
-      ST_X(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lon,
-      ST_Y(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)) AS lat,
-      ST_Distance(
-        ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857))), 4326)::geography, 
-        ST_SetSRID(ST_MakePoint(${boxCenter[1]}, ${boxCenter[0]}), 4326)::geography
-      ) AS distance,
-      "addr:housenumber" as housenumber,
-      tags->'addr:street' as street
-    FROM
-      planet_osm_polygon 
-    WHERE 
-      (LOWER(name) LIKE LOWER('%${searchTerm}%') OR
-      ("addr:housenumber" = '${housenumber}' AND
-      LOWER(tags->'addr:street') LIKE LOWER('${street}'))) AND 
-      ST_Transform(ST_MakeEnvelope(${minLon}, ${minLat}, ${maxLon}, ${maxLat}, 4326), 3857) && way
-    ORDER BY distance
-    LIMIT 100;`;
-  } else {
-    console.log('Searching everywhere');
-    sql = `
-    SELECT 
-      name, 
-      ST_X(ST_Transform(way,4326)) as lon, 
-      ST_Y(ST_Transform(way,4326)) as lat,
-      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
-      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
-      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
-      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat,
-      ST_Distance(
-        ST_Transform(way, 4326)::geography, 
-        ST_SetSRID(ST_MakePoint(${boxCenter[1]}, ${boxCenter[0]}), 4326)::geography
-      ) AS distance
-    FROM 
-      planet_osm_point 
-    WHERE
-      LOWER(name) LIKE LOWER('%${searchTerm}%') OR
-      ("addr:housenumber" = '${housenumber}' AND
-      LOWER(tags->'addr:street') LIKE LOWER('${street}'))
-    UNION
-
-    SELECT 
-      name, 
-      ST_X(ST_Centroid(ST_Transform(way,4326))) as lon, 
-      ST_Y(ST_Centroid(ST_Transform(way,4326))) as lat,
-      ST_XMin(ST_Envelope(ST_Transform(way,4326))) as minlon,
-      ST_YMin(ST_Envelope(ST_Transform(way,4326))) as minlat,
-      ST_XMax(ST_Envelope(ST_Transform(way,4326))) as maxlon,
-      ST_YMax(ST_Envelope(ST_Transform(way,4326))) as maxlat,
-      ST_Distance(
-        ST_Transform(way, 4326)::geography, 
-        ST_SetSRID(ST_MakePoint(${boxCenter[1]}, ${boxCenter[0]}), 4326)::geography
-      ) AS distance
-    FROM 
-      planet_osm_polygon
-    WHERE
-      LOWER(name) LIKE LOWER('%${searchTerm}%') OR
-      ("addr:housenumber" = '${housenumber}' AND
-      LOWER(tags->'addr:street') LIKE LOWER('${street}'))
-    ORDER BY distance
-    LIMIT 100;`;
+    query += `&viewbox=${minLon},${minLat},${maxLon},${maxLat}&bounded=1`;
   }
 
   const client = await connect_db();

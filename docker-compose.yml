@@ -10,6 +10,8 @@ services:
       - ./src:/app/src
     depends_on:
       - fluentd
+      - tile-server
+      - nominatim
     logging:
       driver: "fluentd"
       options:
@@ -36,7 +38,19 @@ services:
       - "24224:24224"
       - "24224:24224/udp"
     restart: always
+  nominatim:
+    container_name: nominatim
+    image: mediagis/nominatim:4.4
+    ports:
+        - "9090:8080"
+    environment:
+        PBF_PATH: /nominatim/data/new-york.osm.pbf
+        NOMINATIM_PASSWORD: mysecretpassword
+    volumes:
+      - ./new-york.osm.pbf:/nominatim/data/new-york.osm.pbf
+      - nominatim-data:/var/lib/postgresql/14/main
+    shm_size: 64MB
 
 volumes:
   osm-data:
-    external: true
+  nominatim-data:

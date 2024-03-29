@@ -43,7 +43,7 @@ export async function POST(request) {
       });
     } else {
       res = res.map(row => {
-        const [minLat, minLon, maxLat, maxLon] = row.boundingbox;
+        const [minLat, maxLat, minLon, maxLon] = row.boundingbox;
         return {
           name: row.display_name,
           coordinates: {

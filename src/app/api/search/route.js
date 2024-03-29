@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 
+function calculateDistance(location, center) {
+  const lonDiff = parseFloat(location.lon) - center[1];
+  const latDiff = parseFloat(location.lat) - center[0];
+  return Math.sqrt(lonDiff * lonDiff + latDiff * latDiff);
+}
 export async function POST(request) {
   const { bbox, onlyInBox, searchTerm } = await request.json();
   const { minLat, minLon, maxLat, maxLon } = bbox;
+  const boxCenter = [(minLat + maxLat) / 2, (minLon + maxLon) / 2];
   console.log(
     `POST /search: ${JSON.stringify({ bbox, onlyInBox, searchTerm })}`
   );
@@ -32,6 +38,7 @@ export async function POST(request) {
             maxLat,
             maxLon,
           },
+          distance: calculateDistance(row, boxCenter),
         };
       });
     } else {
@@ -49,9 +56,15 @@ export async function POST(request) {
             maxLat,
             maxLon,
           },
+          distance: calculateDistance(row, boxCenter),
         };
       });
     }
+    res.sort((a, b) => a.distance - b.distance);
+    res = res.map(row => {
+      delete row.distance;
+      return row;
+    });
 
     return NextResponse.json(res);
   } catch (err) {

@@ -31,7 +31,7 @@ export default function Map() {
       [42, -74],
       7
     );
-    L.tileLayer('http://localhost:3000/tiles/l{z}/{x}/{y}.png', {
+    L.tileLayer('http://209.151.149.94:3000/tiles/l{z}/{x}/{y}.png', {
       maxZoom: 25,
       minZoom: 4,
       id: 'base',

@@ -73,9 +73,9 @@ services:
     environment:
       PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
       NOMINATIM_PASSWORD: mysecretpassword
-      POSTGRES_SHARED_BUFFERS: 2GB # 25% of total memory
+      POSTGRES_SHARED_BUFFERS: 2.5GB # 25% of total memory
       POSTGRES_MAINTENANCE_WORK_MEM: 64MB 
-      POSTGRES_AUTOVACUUM_WORK_MEM: 256MB 
+      POSTGRES_AUTOVACUUM_WORK_MEM: 2GB
       POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main

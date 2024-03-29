@@ -4,6 +4,7 @@ services:
     build:
       context: ./
       dockerfile: ./docker/Dockerfile.prod
+    image: 127.0.0.1:5000/next
     ports:
       - "3000:3000"
     restart: always
@@ -12,14 +13,42 @@ services:
     logging:
       driver: "fluentd"
       options:
-        fluentd-address: localhost:24224
+        fluentd-address: 127.0.0.1:24224
         tag: next.access
         fluentd-async-connect: "true"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == manager
+
+  fluentd:
+    container_name: fluentd
+    build:
+      context: ./
+      dockerfile: ./docker/fluentd.Dockerfile
+    image: 127.0.0.1:5000/fluentd
+    volumes:
+      - ./logs/:/var/log/fluentd/
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == manager
+
   tile-server:
     container_name: tile-server
     build:
       context: ./
       dockerfile: ./docker/tile-server.Dockerfile
+    image: 127.0.0.1:5000/tile-server
     volumes:
       - osm-data:/data/database/
     ports:
@@ -27,17 +56,15 @@ services:
       - "5432:5432"
     environment:
       DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
-  fluentd:
-    container_name: fluentd
-    build:
-      context: ./
-      dockerfile: ./docker/fluentd.Dockerfile
-    volumes:
-      - ./logs/:/var/log/fluentd/
-    ports:
-      - "24224:24224"
-      - "24224:24224/udp"
-    restart: always
+      THREADS: 2
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.hostname == tile-server
+          
   nominatim:
     container_name: nominatim
     image: mediagis/nominatim:4.4
@@ -46,11 +73,26 @@ services:
     environment:
       PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
       NOMINATIM_PASSWORD: mysecretpassword
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
+      POSTGRES_AUTOVACUUM_WORK_MEM: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 512MB
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+           size: 2147483648
     shm_size: 64MB
     restart: always
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.hostname == nominatim
 
 volumes:
-  tile-server-data:
+  osm-data:
   nominatim-data:

@@ -1,0 +1,141 @@
+---
+- name: Setup VMs
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Kill /var/lib/dpkg/lock-frontend process if exists
+      shell: kill -9 $(lsof -t /var/lib/dpkg/lock-frontend)
+      ignore_errors: true
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Ensure Docker daemon is running
+      service:
+        name: docker
+        state: started
+
+- name: Clone the git repository
+  hosts: swarm_manager
+  become: yes
+  tasks:
+    - name: Install git
+      apt:
+        name:
+          - git
+        state: latest
+        update_cache: yes
+    - name: Copy private SSH key
+      copy:
+        src: "./github"
+        dest: "~/.ssh/github"
+        mode: '0600'  # Sets the file permissions to read and write for the owner only
+
+    - name: Clone the repository
+      git:
+        repo: "git@github.com:goodgoed/CSE356_project.git"
+        dest: "/root/project"
+        accept_hostkey: yes
+        key_file: "~/.ssh/github"
+        force: yes
+      
+    - name: Switch to another branch
+      shell: git switch test/nominatim
+      args:
+        chdir: "/root/project"
+    
+    - name: Create a directory for logs
+      file:
+        path: "/root/project/logs"
+        state: directory
+
+- name: Setup Docker Swarm Manager
+  hosts: swarm_manager
+  become: yes
+  tasks:
+    - name: Check if Docker is in swarm mode
+      shell: docker info --format '{{'{{'}}.Swarm.LocalNodeState{{'}}'}}'
+      register: swarm_status
+      changed_when: false
+      ignore_errors: true
+
+    - name: Initialize Docker Swarm
+      shell: docker swarm init --advertise-addr {{ hostvars[groups['swarm_manager'][0]].ansible_default_ipv4.address }}
+      when: swarm_status.stdout != 'active'
+
+    - name: Setup local Docker registry
+      shell: docker service create --name registry --publish published=5000,target=5000 registry:2
+      ignore_errors: true
+
+    - name: Obtain worker join token
+      shell: docker swarm join-token -q worker
+      register: worker_join_token
+
+- name: Setup Docker Swarm Worker Nodes
+  hosts: swarm_workers
+  become: yes
+  tasks:
+    - name: Change hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+      ignore_errors: true
+
+    - name: Join the swarm
+      shell: docker swarm join --token {{ hostvars[groups['swarm_manager'][0]].worker_join_token.stdout }} {{ hostvars[groups['swarm_manager'][0]].ansible_default_ipv4.address }}:2377
+      ignore_errors: true
+
+- name: Deploy Services to Swarm
+  hosts: swarm_manager
+  become: yes
+  tasks:
+    - name: Enable docker.service
+      systemd:
+        name: docker.service
+        daemon_reload: true
+        enabled: true
+    
+    - name: Check hostname of workers are changed
+      shell: docker node ls | grep {{ worker }}
+      delegate_to: "{{ groups['swarm_manager'][0] }}"
+      loop: "{{ groups['swarm_workers'] }}"
+      loop_control:
+        loop_var: worker
+      register: grep_output
+      retries: 5
+      delay: 3
+      until: grep_output.stdout != ""
+
+    # - name: Build images
+    #   shell: docker compose -f /root/project/docker-compose.prod.yml build
+
+    # - name: Push images to local registry
+    #   shell: docker compose -f /root/project/docker-compose.prod.yml push
+
+    # - name: Deploy stack to Docker Swarm
+    #   shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_1 --detach=true

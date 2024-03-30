@@ -38,7 +38,6 @@ export async function POST(request) {
   // Build search query
   let query = `http://${process.env.BUILD_ENVIRONMENT === 'docker' ? 'nominatim:8080' : 'localhost:9090'}/search?q=${searchTerm}`;
   if (onlyInBox) {
-    console.log('Searching only in box');
     query += `&viewbox=${minLon},${minLat},${maxLon},${maxLat}&bounded=1`;
   }
 
@@ -51,8 +50,8 @@ export async function POST(request) {
         return {
           name: row.display_name,
           coordinates: {
-            lon: row.lon,
-            lat: row.lat,
+            lon: parseFloat(row.lon),
+            lat: parseFloat(row.lat),
           },
           bbox: {
             minLat,
@@ -69,21 +68,22 @@ export async function POST(request) {
         return {
           name: row.display_name,
           coordinates: {
-            lon: row.lon,
-            lat: row.lat,
+            lon: parseFloat(row.lon),
+            lat: parseFloat(row.lat),
           },
           bbox: {
-            minLat: minLat,
-            minLon: minLon,
-            maxLat: maxLat,
-            maxLon: maxLon,
+            minLat: parseFloat(minLat),
+            minLon: parseFloat(minLon),
+            maxLat: parseFloat(maxLat),
+            maxLon: parseFloat(maxLon),
           },
           distance: calculateDistance(row, boxCenter),
         };
       });
     }
     res.sort((a, b) => a.distance - b.distance);
-    console.log(res);
+    console.log('Returned result: ', res);
+
     res = res.map(row => {
       delete row.distance;
       return row;

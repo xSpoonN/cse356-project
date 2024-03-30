@@ -47,14 +47,14 @@ export async function POST(request) {
         return {
           name: row.display_name,
           coordinates: {
-            lon: row.lon,
-            lat: row.lat,
+            lon: parseFloat(row.lon),
+            lat: parseFloat(row.lat),
           },
           bbox: {
-            minLat,
-            minLon,
-            maxLat,
-            maxLon,
+            minLat: parseFloat(minLat),
+            minLon: parseFloat(minLon),
+            maxLat: parseFloat(maxLat),
+            maxLon: parseFloat(maxLon),
           },
           distance: calculateDistance(row, boxCenter),
         };

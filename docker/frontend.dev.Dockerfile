@@ -10,11 +10,12 @@ RUN \
   fi
 
 COPY ./src/ ./src/
-COPY public/ ./public/
+COPY ./public/ ./public/
 COPY ./next.config.mjs ./
 COPY ./tailwind.config.js ./
 COPY ./postcss.config.js ./
 COPY ./jsconfig.json ./
+COPY ./.env.development ./
 
 # Next.js collects completely anonymous telemetry data about general usage. Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line to disable telemetry at run time

@@ -3,7 +3,7 @@ services:
     container_name: frontend
     build:
       context: ./frontend/
-      dockerfile: ../docker/Dockerfile.prod
+      dockerfile: ../docker/frontend.prod.Dockerfile
     image: 127.0.0.1:5000/next
     ports:
       - "80:3000"
@@ -14,7 +14,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: 127.0.0.1:24224
-        tag: next.access
+        tag: frontend
         fluentd-async-connect: "true"
     deploy:
       placement:

@@ -31,11 +31,14 @@ export default function Map() {
       [42, -74],
       7
     );
-    L.tileLayer('http://localhost:3000/tiles/l{z}/{x}/{y}.png', {
-      maxZoom: 25,
-      minZoom: 4,
-      id: 'base',
-    }).addTo(newMap);
+    L.tileLayer(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/tiles/l{z}/{x}/{y}.png`,
+      {
+        maxZoom: 25,
+        minZoom: 4,
+        id: 'base',
+      }
+    ).addTo(newMap);
     markerLayerRef.current = L.featureGroup().addTo(newMap);
 
     updateBbox(newMap);
@@ -75,13 +78,16 @@ export default function Map() {
   }
 
   const search = async () => {
-    const res = await fetch('http://localhost:3000/api/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ bbox, onlyInBox, searchTerm }),
-    });
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/search`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bbox, onlyInBox, searchTerm }),
+      }
+    );
     const data = await res.json();
     console.log('data: ', data);
     setSearchResults(Object.values(data));

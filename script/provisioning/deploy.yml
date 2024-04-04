@@ -53,26 +53,20 @@
         update_cache: yes
     - name: Copy private SSH key
       copy:
-        src: "./github"
-        dest: "~/.ssh/github"
-        mode: '0600'  # Sets the file permissions to read and write for the owner only
+        src: './github'
+        dest: '~/.ssh/github'
+        mode: '0600' # Sets the file permissions to read and write for the owner only
 
     - name: Clone the repository
       git:
-        repo: "git@github.com:goodgoed/CSE356_project.git"
-        dest: "/root/project"
+        repo: 'git@github.com:goodgoed/CSE356_project.git'
+        dest: '/root/project'
         accept_hostkey: yes
-        key_file: "~/.ssh/github"
+        key_file: '~/.ssh/github'
         force: yes
-      
-    - name: Switch to another branch
-      shell: git switch test/nominatim
-      args:
-        chdir: "/root/project"
-    
     - name: Create a directory for logs
       file:
-        path: "/root/project/logs"
+        path: '/root/project/logs'
         state: directory
 
 - name: Setup Docker Swarm Manager
@@ -103,7 +97,7 @@
   tasks:
     - name: Change hostname
       ansible.builtin.hostname:
-        name: "{{ inventory_hostname }}"
+        name: '{{ inventory_hostname }}'
       ignore_errors: true
 
     - name: Join the swarm
@@ -119,7 +113,7 @@
         name: docker.service
         daemon_reload: true
         enabled: true
-    
+
     - name: Check hostname of workers are changed
       shell: docker node ls | grep {{ worker }}
       delegate_to: "{{ groups['swarm_manager'][0] }}"
@@ -131,11 +125,11 @@
       delay: 3
       until: grep_output.stdout != ""
 
-    # - name: Build images
-    #   shell: docker compose -f /root/project/docker-compose.prod.yml build
+    - name: Build images
+      shell: docker compose -f /root/project/docker-compose.prod.yml build
 
-    # - name: Push images to local registry
-    #   shell: docker compose -f /root/project/docker-compose.prod.yml push
+    - name: Push images to local registry
+      shell: docker compose -f /root/project/docker-compose.prod.yml push
 
-    # - name: Deploy stack to Docker Swarm
-    #   shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_1 --detach=true
+    - name: Deploy stack to Docker Swarm
+      shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_2 --detach=true

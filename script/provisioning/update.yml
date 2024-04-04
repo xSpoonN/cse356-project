@@ -3,11 +3,11 @@
   hosts: swarm_manager
   become: yes
   vars:
-    target_branch: test/nominatim
+    target_branch: main
 
   tasks:
     - name: Remove the currently running stack
-      shell: docker stack rm milestone_1
+      shell: docker stack rm milestone_2
       ignore_errors: true
 
     - name: Pull the new change from the remote repo
@@ -30,4 +30,4 @@
       shell: docker compose -f /root/project/docker-compose.prod.yml push
 
     - name: Deploy stack to Docker Swarm
-      shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_1 --detach=true
+      shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_2 --detach=true

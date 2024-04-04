@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Root Directory",
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": "prettier --write"
+    "*.{js,jsx,ts,tsx,yml}": "prettier --write"
   },
   "dependencies": {
     "prettier": "3.2.5",

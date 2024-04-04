@@ -7,7 +7,7 @@ const port = 3000;
 
 // @todo: FIX THIS
 const clientPromise = mongoose
-  .connect('mongodb://root:password@mongo:27017/user')
+  .connect('mongodb://root:password@mongo:27017/user?authSource=admin')
   .then(m => m.connection.getClient());
 
 app.use(express.json());

@@ -1,7 +1,7 @@
 const express = require('express'),
   router = express.Router();
 
-router.get('/search', async (req, res) => {
+router.post('/search', async (req, res) => {
   function calculateDistance(location, center) {
     return cosineDistanceBetweenPoints(
       parseFloat(center[0]),

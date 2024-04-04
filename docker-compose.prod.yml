@@ -80,8 +80,10 @@ services:
     image: 127.0.0.1:5000/tile-server
     volumes:
       - osm-data:/data/database/
-    ports:
-      - '8080:80'
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 201326592 # 192MB
     environment:
       DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
       THREADS: 2

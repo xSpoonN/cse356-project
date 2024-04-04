@@ -1,5 +1,6 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
+const mongoose = require('mongoose');
 
 router = express.Router();
 
@@ -72,23 +73,23 @@ router.post('/adduser', async (req, res) => {
     await newUser.save();
 
     // Send verification email
-    const transporter = nodemailer.createTransport({
-      port: 25,
-      host: '127.0.0.1',
-      secure: false,
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+    // const transporter = nodemailer.createTransport({
+    //   port: 25,
+    //   host: '127.0.0.1',
+    //   secure: false,
+    //   tls: {
+    //     rejectUnauthorized: false,
+    //   },
+    // });
 
-    const verificationLink = `http://mygroup.cse356.compas.cs.stonybrook.edu/verify?email=${encodeURIComponent(email)}&token=${verificationKey}`;
-    const mailOptions = {
-      from: 'mygroup@cse356.compas.cs.stonybrook.edu',
-      to: email,
-      subject: 'Account Verification',
-      text: `Please click the following link to verify your account: ${verificationLink}`,
-    };
-    await transporter.sendMail(mailOptions);
+    // const verificationLink = `http://mygroup.cse356.compas.cs.stonybrook.edu/verify?email=${encodeURIComponent(email)}&token=${verificationKey}`;
+    // const mailOptions = {
+    //   from: 'mygroup@cse356.compas.cs.stonybrook.edu',
+    //   to: email,
+    //   subject: 'Account Verification',
+    //   text: `Please click the following link to verify your account: ${verificationLink}`,
+    // };
+    // await transporter.sendMail(mailOptions);
 
     res.status(201).send({
       status: 'OK',
@@ -194,18 +195,18 @@ router.post('/user', async (req, res) => {
 
 router.get('/verify', async (req, res) => {
   // Check if email and token are provided
-  if (!('email' in req.query && 'token' in req.query)) {
+  if (!('email' in req.query && 'key' in req.query)) {
     return res
-      .status(200)
-      .send({ status: 'ERROR', message: 'Email and token are required' });
+      .status(500)
+      .send({ status: 'ERROR', message: 'Email and key are required' });
   }
-  const { email, token } = req.query;
+  const { email, key } = req.query;
 
   // Check if email and token are truthy value
-  if (!email || !token) {
+  if (!email || !key) {
     return res
-      .status(200)
-      .send({ status: 'ERROR', message: 'Email and token are required' });
+      .status(500)
+      .send({ status: 'ERROR', message: 'Email and key are required' });
   }
 
   // Validate email
@@ -214,9 +215,9 @@ router.get('/verify', async (req, res) => {
     return res.status(200).send({ status: 'ERROR', message: 'Invalid email' });
   }
 
-  //Check if user exists and token is valid
+  //Check if user exists and key is valid
   try {
-    const user = await User.findOne({ email, verificationToken: token });
+    const user = await User.findOne({ email, verificationToken: key });
     if (!user) {
       return res
         .status(200)

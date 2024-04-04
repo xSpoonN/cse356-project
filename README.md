@@ -1,15 +1,8 @@
 ## Development
 run `docker compose up` in the root directory
 
-## Setting up new VM
-1. Create 1 machine with 1 core 1gb memory and 2 machines with 2 core 4gb memory
-2. Write 1gb memory machine's ip address to manager and 4gb memory machine's ip address as workers in `inventory.ini`
-4. `cd` into script/provisioning
-5. run `ansible-playbook -i inventory.ini deploy.yml`
-6. ssh into mananger node and change the endpoint specified in `Map.jsx`
-7. Run `docker compose -f /root/project/docker-compose.prod.yml build`
-8. Run `docker compose -f /root/project/docker-compose.prod.yml push`
-9. Run `docker stack deploy -c /root/project/docker-compose.prod.yml milestone_1 --detach=true`
+## Notes
+Make sure docker container has 4 CPUs and 8GB of RAM at least. Otherwise, installing would fail due to OOM.
 
 ```
 CSE356_project

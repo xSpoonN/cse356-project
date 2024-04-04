@@ -1,13 +1,13 @@
 services:
-  next:
-    container_name: next
+  frontend:
+    container_name: frontend
     build:
-      context: ./
-      dockerfile: ./docker/Dockerfile.dev
+      context: ./frontend/
+      dockerfile: ../docker/Dockerfile.dev
     ports:
-      - "3000:3000"
+      - "80:3000"
     volumes:
-      - ./src:/app/src
+      - ./frontend/src:/app/src
     depends_on:
       - fluentd
       - tile-server
@@ -19,35 +19,55 @@ services:
         tag: next.access
         fluentd-async-connect: "true"
     restart: always
-  tile-server:
-    build:
-      context: ./
-      dockerfile: ./docker/tile-server.Dockerfile
-    volumes:
-      - tile-server-data:/data/database/
-    ports:
-      - "8080:80"
-      - "5432:5432"
-    environment:
-      DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
   fluentd:
     container_name: fluentd
     build:
-      context: ./
-      dockerfile: ./docker/fluentd.Dockerfile
+      context: ./docker/
+      dockerfile: ./fluentd.Dockerfile
     volumes:
       - ./logs/:/var/log/fluentd/
     ports:
       - "24224:24224"
       - "24224:24224/udp"
     restart: always
+  backend:
+    container_name: backend
+    build:
+      context: ./backend/
+      dockerfile: ../docker/backend.dev.Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/server.js:/app/server.js
+    depends_on:
+      - tile-server
+      - nominatim
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: 127.0.0.1:24224
+        tag: backend
+        fluentd-async-connect: "true"
+    restart: always
+  tile-server:
+    container_name: tile-server
+    build:
+      context: ./docker/
+      dockerfile: ./tile-server.Dockerfile
+    volumes:
+      - osm-data:/data/database/
+    ports:
+      - "8080:80"
+      - "5432:5432"
+    environment:
+      DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
   nominatim:
     container_name: nominatim
     image: mediagis/nominatim:4.4
     ports:
       - "9090:8080"
     environment:
-      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf
+      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
       NOMINATIM_PASSWORD: mysecretpassword
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main

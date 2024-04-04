@@ -1,32 +1,16 @@
 {
   "name": "final",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "prepare": "husky"
-  },
+  "version": "1.0.0",
+  "description": "Root Directory",
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "prettier --write"
   },
   "dependencies": {
-    "leaflet": "^1.9.4",
-    "next": "14.1.4",
-    "node-addon-api": "^8.0.0",
-    "pg": "^8.11.3",
-    "react": "^18",
-    "react-dom": "^18",
-    "sharp": "^0.33.3"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.0.1",
-    "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
-    "postcss": "^8",
     "prettier": "3.2.5",
-    "tailwindcss": "^3.3.0"
-  }
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

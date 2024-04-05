@@ -6,8 +6,16 @@ import 'leaflet/dist/leaflet.css';
 
 export default function Sidebar({ map, bbox }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [onlyInBox, setOnlyInBox] = useState(false); // Not used yet
+  const [onlyInBox, setOnlyInBox] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [source, setSource] = useState('');
+  const [dest, setDest] = useState('');
+
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [register, setRegister] = useState(false); // Register or login
+  const [loggedIn, setLoggedIn] = useState(false); // @todo: Temporary, need to check cookies.
   const markerLayerRef = useRef(null);
 
   useEffect(() => {
@@ -66,9 +74,31 @@ export default function Sidebar({ map, bbox }) {
     setSearchResults(Object.values(data));
   };
 
+  const route = async () => {
+    // Maybe convert location to coordinates? Need to clarify requirements
+    // Or do it like google maps where the box gives a list of search results
+    // Fetch route from backend
+    // Update map to reflect route
+  };
+
+  const loginAccount = async () => {
+    // Login logic from backend
+    setLoggedIn(true);
+  };
+
+  const registerAccount = async () => {
+    // Register logic from backend
+    setLoggedIn(true);
+  };
+
+  const logoutAccount = async () => {
+    // Logout logic from backend
+    setLoggedIn(false);
+  };
+
   return (
     <div
-      className="basis-1/3 bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
+      className="basis-1/4 bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
       style={{ zIndex: 9999 }}
     >
       {/* Search Input */}
@@ -121,6 +151,101 @@ export default function Sidebar({ map, bbox }) {
               ))
             : 'No results')}
       </div>
+      <br />
+      <br />
+      {loggedIn && (
+        <>
+          <input
+            type="text"
+            value={source}
+            placeholder="Source"
+            className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={e => setSource(e.target.value)}
+          />
+          <input
+            type="text"
+            value={dest}
+            placeholder="Destination"
+            className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={e => setDest(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') route();
+            }}
+          />
+          <button
+            className="mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+            onClick={route}
+          >
+            {' '}
+            Route{' '}
+          </button>
+          <button
+            className="mt-2 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 mt-auto"
+            onClick={logoutAccount}
+          >
+            {' '}
+            Logout{' '}
+          </button>
+        </>
+      )}
+      {!loggedIn && (
+        <>
+          <input
+            type="text"
+            value={username}
+            placeholder="Username"
+            className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={e => setUsername(e.target.value)}
+          />
+          {register && (
+            <input
+              type="email"
+              value={email}
+              placeholder="Email"
+              className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={e => setEmail(e.target.value)}
+            />
+          )}
+          <input
+            type="password"
+            value={password}
+            placeholder="Password"
+            className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={e => setPassword(e.target.value)}
+          />
+          <button
+            className="mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+            onClick={() => {
+              if (register) registerAccount();
+              else loginAccount();
+            }}
+          >
+            {' '}
+            {register ? 'Register' : 'Login'}{' '}
+          </button>
+          <div className="text-center mt-2">
+            {register ? (
+              <span>
+                <button
+                  className="text-blue-500 underline"
+                  onClick={() => setRegister(false)}
+                >
+                  Login to an existing account
+                </button>
+              </span>
+            ) : (
+              <span>
+                <button
+                  className="text-blue-500 underline"
+                  onClick={() => setRegister(true)}
+                >
+                  Create Account
+                </button>
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

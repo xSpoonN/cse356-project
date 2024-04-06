@@ -11,4 +11,4 @@ RUN \
 
 COPY ./ ./
 
-CMD BUILD_ENVIRONMENT=docker npm run dev
+CMD BUILD_ENVIRONMENT=docker NODE_ENV=development npm run dev

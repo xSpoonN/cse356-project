@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
   },
   verified: {
     type: Boolean,
-    default: false,
+    default: process.env.NODE_ENV === 'production' ? false : true,
   },
 });
 const User = mongoose.model('User', userSchema);
@@ -73,23 +73,25 @@ router.post('/adduser', async (req, res) => {
     await newUser.save();
 
     // Send verification email
-    // const transporter = nodemailer.createTransport({
-    //   port: 25,
-    //   host: '127.0.0.1',
-    //   secure: false,
-    //   tls: {
-    //     rejectUnauthorized: false,
-    //   },
-    // });
+    if (process.env.NODE_ENV === 'production') {
+      const transporter = nodemailer.createTransport({
+        port: 25,
+        host: '127.0.0.1',
+        secure: false,
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
 
-    // const verificationLink = `http://mygroup.cse356.compas.cs.stonybrook.edu/verify?email=${encodeURIComponent(email)}&token=${verificationKey}`;
-    // const mailOptions = {
-    //   from: 'mygroup@cse356.compas.cs.stonybrook.edu',
-    //   to: email,
-    //   subject: 'Account Verification',
-    //   text: `Please click the following link to verify your account: ${verificationLink}`,
-    // };
-    // await transporter.sendMail(mailOptions);
+      const verificationLink = `http://mygroup.cse356.compas.cs.stonybrook.edu/verify?email=${encodeURIComponent(email)}&token=${verificationKey}`;
+      const mailOptions = {
+        from: 'mygroup@cse356.compas.cs.stonybrook.edu',
+        to: email,
+        subject: 'Account Verification',
+        text: `Please click the following link to verify your account: ${verificationLink}`,
+      };
+      await transporter.sendMail(mailOptions);
+    }
 
     res.status(201).send({
       status: 'OK',

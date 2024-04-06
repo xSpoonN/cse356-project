@@ -30,7 +30,6 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
       tile_req.end();
     });
 
-    // Assuming you want to forward the tile response as binary data
     res.writeHead(200, { 'Content-Type': 'image/png' });
     res.end(tile_res);
   } catch (error) {
@@ -60,6 +59,9 @@ router.post('/convert', async (req, res) => {
 });
 
 router.get('/turn/$TL/$BR.png', async (req, res) => {
+  if (!req.session.username)
+    return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
+
   const { TL, BR } = req.params;
 
   return res.status(200).json('HELLO WORLD');

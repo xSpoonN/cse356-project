@@ -1,5 +1,6 @@
-const express = require('express'),
-  router = express.Router();
+const express = require('express');
+
+router = express.Router();
 
 router.post('/search', async (req, res) => {
   function calculateDistance(location, center) {

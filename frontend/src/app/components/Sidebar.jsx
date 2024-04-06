@@ -8,6 +8,7 @@ export default function Sidebar({ map, bbox }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [onlyInBox, setOnlyInBox] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [routeResults, setRouteResults] = useState([]); // [ {description: '', coordinates: {lat: 0, lon: 0}} ]
   const [source, setSource] = useState({ name: '', lat: 0, lon: 0 });
   const [dest, setDest] = useState({ name: '', lat: 0, lon: 0 });
   const [mode, setMode] = useState('search'); // search or route
@@ -67,6 +68,53 @@ export default function Sidebar({ map, bbox }) {
     }
   }, [searchResults]);
 
+  useEffect(() => {
+    if (!map) return;
+    markerLayerRef.current.clearLayers();
+    routeResults.forEach(result => {
+      L.marker([result.coordinates.lat, result.coordinates.lon])
+        .addTo(markerLayerRef.current)
+        .bindPopup(result.description);
+
+      // Debugging /turn api
+      console.log(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/turn/lat,lon/lat,lon`
+      );
+    });
+
+    L.marker([source.lat, source.lon], {
+      icon: L.icon({ iconUrl: '/icon-red.png', iconSize: [25, 38] }),
+    }).addTo(markerLayerRef.current);
+
+    L.marker([dest.lat, dest.lon], {
+      icon: L.icon({ iconUrl: '/icon-red.png', iconSize: [25, 38] }),
+    }).addTo(markerLayerRef.current);
+
+    const boundingBox = [
+      {
+        lat: Math.min(source.lat, dest.lat),
+        lon: Math.min(source.lon, dest.lon),
+      },
+      {
+        lat: Math.max(source.lat, dest.lat),
+        lon: Math.max(source.lon, dest.lon),
+      },
+    ];
+
+    map.fitBounds(
+      [
+        [boundingBox[0].lat, boundingBox[0].lon], // Southwest corner
+        [boundingBox[1].lat, boundingBox[1].lon], // Northeast corner
+      ],
+      {
+        animate: true,
+        duration: 2,
+        easeLinearity: 0.5,
+        padding: [50, 50], // Padding in pixels (y, x)
+      }
+    );
+  }, [routeResults]);
+
   function calcFlyDuration(lat, lon) {
     return Math.min(
       2,
@@ -113,15 +161,11 @@ export default function Sidebar({ map, bbox }) {
           },
         }
       );
+      if (!res.ok) throw Error('Failed to route');
       const data = await res.json();
       console.log('route data: ', data);
 
-      // FIXME - not sure why but markers are not added
-      Object.values(data).forEach(route => {
-        L.marker([route.coordinates.lat, route.coordinates.lon])
-          .addTo(markerLayerRef.current)
-          .bindPopup('TURN');
-      });
+      setRouteResults(Object.values(data));
       setSearchResults([]);
     } catch (error) {
       console.error(error);
@@ -185,6 +229,18 @@ export default function Sidebar({ map, bbox }) {
       className="basis-4/12 bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
       style={{ zIndex: 9999 }}
     >
+      {mode === 'route' && (
+        <button
+          className="text-sm ml-auto"
+          onClick={() => {
+            setMode('search');
+            setSource({ name: '', lat: 0, lon: 0 });
+            setDest({ name: '', lat: 0, lon: 0 });
+          }}
+        >
+          &#x26CC;
+        </button>
+      )}
       {/* Search Input */}
       <div className="relative">
         <input

@@ -107,9 +107,11 @@ router.post('/login', async (req, res) => {
   // Check if username or password is provided
   const { body } = req;
 
+  console.log(body);
+
   if (!('username' in body && 'password' in body)) {
     return res
-      .status(200)
+      .status(500)
       .send({ status: 'ERROR', message: 'Username and password are required' });
   }
   const { username, password } = body;
@@ -117,7 +119,7 @@ router.post('/login', async (req, res) => {
   // Check if username and password is truthy value
   if (!username || !password) {
     return res
-      .status(200)
+      .status(500)
       .send({ status: 'ERROR', message: 'Username and password are required' });
   }
 
@@ -125,7 +127,7 @@ router.post('/login', async (req, res) => {
   const user = await User.findOne({ username });
   if (!user || user.password !== password || !user.verified) {
     return res
-      .status(200)
+      .status(500)
       .send({ status: 'ERROR', message: 'Invalid username or password' });
   }
 

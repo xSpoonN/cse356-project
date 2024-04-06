@@ -84,7 +84,7 @@ services:
       - '5432:5432'
     environment:
       DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
-    shm_size: 192mb
+    shm_size: 256mb
 
   nominatim:
     container_name: nominatim

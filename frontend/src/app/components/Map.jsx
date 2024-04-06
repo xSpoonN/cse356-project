@@ -64,7 +64,7 @@ export default function Map() {
   return (
     <div className="flex w-full">
       <Sidebar map={map} bbox={bbox} />
-      <div id="map" className="basis-3/4" style={{ height: '100vh' }} />
+      <div id="map" className="basis-8/12" style={{ height: '100vh' }} />
     </div>
   );
 }

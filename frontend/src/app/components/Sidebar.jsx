@@ -8,8 +8,10 @@ export default function Sidebar({ map, bbox }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [onlyInBox, setOnlyInBox] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
-  const [source, setSource] = useState('');
-  const [dest, setDest] = useState('');
+  const [source, setSource] = useState({ name: '', lat: 0, lon: 0 });
+  const [dest, setDest] = useState({ name: '', lat: 0, lon: 0 });
+  const [mode, setMode] = useState('search'); // search or route
+  const [selecting, setSelecting] = useState('dst'); // Selecting src or dst
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,6 +19,22 @@ export default function Sidebar({ map, bbox }) {
   const [register, setRegister] = useState(false); // Register or login
   const [loggedIn, setLoggedIn] = useState(false); // @todo: Temporary, need to check cookies.
   const markerLayerRef = useRef(null);
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/user`,
+          { method: 'POST' }
+        );
+        const data = await res.json();
+        if (res.ok && data.loggedin) setLoggedIn(true);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkLogin();
+  }, []);
 
   useEffect(() => {
     if (map) markerLayerRef.current = L.featureGroup().addTo(map);
@@ -75,53 +93,148 @@ export default function Sidebar({ map, bbox }) {
   };
 
   const route = async () => {
-    // Maybe convert location to coordinates? Need to clarify requirements
-    // Or do it like google maps where the box gives a list of search results
-    // Fetch route from backend
-    // Update map to reflect route
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            source: {
+              lat: source.lat,
+              lon: source.lon,
+            },
+            destination: {
+              lat: dest.lat,
+              lon: dest.lon,
+            },
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const data = await res.json();
+      console.log('route data: ', data);
+
+      // FIXME - not sure why but markers are not added
+      Object.values(data).forEach(route => {
+        L.marker([route.coordinates.lat, route.coordinates.lon])
+          .addTo(markerLayerRef.current)
+          .bindPopup('TURN');
+      });
+      setSearchResults([]);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const loginAccount = async () => {
-    // Login logic from backend
-    setLoggedIn(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/login`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            username,
+            password,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!res.ok) throw Error('Failed to login');
+      setLoggedIn(true);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const registerAccount = async () => {
-    // Register logic from backend
-    setLoggedIn(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/adduser`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            username,
+            password,
+            email,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!res.ok) throw Error('Failed to register');
+      setRegister(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const logoutAccount = async () => {
-    // Logout logic from backend
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/logout`, {
+      method: 'POST',
+    });
     setLoggedIn(false);
   };
 
   return (
     <div
-      className="basis-1/4 bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
+      className="basis-4/12 bottom-4 right-4 bg-white p-4 rounded-lg shadow-md flex flex-col"
       style={{ zIndex: 9999 }}
     >
       {/* Search Input */}
-      <input
-        type="text"
-        value={searchTerm}
-        placeholder="Search"
-        className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        onChange={e => setSearchTerm(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter') search();
-        }}
-      />
-
-      <div className="flex justify-between items-center mt-2">
-        <label htmlFor="onlyInBox">Only in Box</label>
+      <div className="relative">
         <input
-          type="checkbox"
-          name="onlyInBox"
-          id="onlyInBox"
-          className="transform scale-125 mr-2"
-          onChange={e => setOnlyInBox(e.target.checked)}
+          type="text"
+          value={mode === 'search' ? searchTerm : source.name}
+          placeholder="Search"
+          className="w-full mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={e => {
+            if (mode === 'route')
+              setSource(prev => ({ ...prev, name: e.target.value }));
+            setSearchTerm(e.target.value);
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') search();
+          }}
+          onClick={() => mode === 'route' && setSelecting('src')}
         />
+        {mode === 'search' ? (
+          <input
+            type="checkbox"
+            name="onlyInBox"
+            id="onlyInBox"
+            className="absolute top-5 right-2 transform scale-125 mr-2"
+            onChange={e => setOnlyInBox(e.target.checked)}
+          />
+        ) : (
+          <>
+            <input
+              type="text"
+              value={dest.name}
+              placeholder="Search"
+              className="w-full mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={e => {
+                setSearchTerm(e.target.value);
+                setDest(prev => ({ ...prev, name: e.target.value }));
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') search();
+              }}
+              onClick={() => mode === 'route' && setSelecting('dst')}
+            />
+            <button
+              className="my-4 w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+              onClick={route}
+            >
+              {' '}
+              Route{' '}
+            </button>
+          </>
+        )}
       </div>
       {/* Search Results */}
       <div className="max-h-144 overflow-y-auto">
@@ -130,7 +243,7 @@ export default function Sidebar({ map, bbox }) {
             ? searchResults.map((result, index) => (
                 <div
                   key={index}
-                  className="p-2 bg-gray-100 rounded-md mb-2 cursor-pointer hover:bg-gray-200"
+                  className="flex items-center mr-auto p-2 bg-gray-100 rounded-md mb-2 cursor-pointer hover:bg-gray-200 gap-2"
                   onClick={() => {
                     map.flyTo(
                       [result.coordinates.lat, result.coordinates.lon],
@@ -144,9 +257,39 @@ export default function Sidebar({ map, bbox }) {
                         animate: true,
                       }
                     );
+                    if (selecting === 'src') {
+                      setSource({
+                        name: result.name,
+                        lat: result.coordinates.lat,
+                        lon: result.coordinates.lon,
+                      });
+                    } else {
+                      setDest({
+                        name: result.name,
+                        lat: result.coordinates.lat,
+                        lon: result.coordinates.lon,
+                      });
+                    }
+
+                    if (mode === 'route') {
+                      setSearchTerm('');
+                      setSearchResults([]);
+                    }
                   }}
                 >
                   {result.name}
+                  {loggedIn && mode === 'search' && (
+                    <button
+                      className="p-2 h-1/2 border text-sm border-blue-500 rounded z-20 hover:bg-white"
+                      onClick={() => {
+                        setMode('route');
+                        setSearchTerm('');
+                        setSearchResults([]);
+                      }}
+                    >
+                      Directions
+                    </button>
+                  )}
                 </div>
               ))
             : 'No results')}
@@ -154,39 +297,13 @@ export default function Sidebar({ map, bbox }) {
       <br />
       <br />
       {loggedIn && (
-        <>
-          <input
-            type="text"
-            value={source}
-            placeholder="Source"
-            className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onChange={e => setSource(e.target.value)}
-          />
-          <input
-            type="text"
-            value={dest}
-            placeholder="Destination"
-            className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onChange={e => setDest(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') route();
-            }}
-          />
-          <button
-            className="mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-            onClick={route}
-          >
-            {' '}
-            Route{' '}
-          </button>
-          <button
-            className="mt-2 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 mt-auto"
-            onClick={logoutAccount}
-          >
-            {' '}
-            Logout{' '}
-          </button>
-        </>
+        <button
+          className="mt-2 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 mt-auto"
+          onClick={logoutAccount}
+        >
+          {' '}
+          Logout{' '}
+        </button>
       )}
       {!loggedIn && (
         <>

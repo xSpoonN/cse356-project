@@ -142,9 +142,8 @@ export default function Sidebar({ map, bbox }) {
 
   const route = async () => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route`,
-        {
+      const [turns, full] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route`, {
           method: 'POST',
           body: JSON.stringify({
             source: {
@@ -159,13 +158,30 @@ export default function Sidebar({ map, bbox }) {
           headers: {
             'Content-Type': 'application/json',
           },
-        }
-      );
-      if (!res.ok) throw Error('Failed to route');
-      const data = await res.json();
-      console.log('route data: ', data);
+        }).then(res => res.json()),
+        fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route/full`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              source: {
+                lat: source.lat,
+                lon: source.lon,
+              },
+              destination: {
+                lat: dest.lat,
+                lon: dest.lon,
+              },
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        ).then(res => res.json()),
+      ]);
+      console.log('route data: ', { turns, full });
 
-      setRouteResults(Object.values(data));
+      setRouteResults(turns);
       setSearchResults([]);
     } catch (error) {
       console.error(error);

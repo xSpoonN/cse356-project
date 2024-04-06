@@ -3,7 +3,7 @@ FROM ubuntu:latest
 USER root
 
 RUN apt-get update && \
-apt-get install -y wget default-jre-headless unzip postgresql-client && \
+apt-get install -y wget default-jre-headless unzip postgresql-client dos2unix && \
 apt-get update && \
 apt-get -y upgrade && rm -rf /var/lib/apt/lists/*
 
@@ -21,5 +21,6 @@ COPY ./osm2po.config /osm2po/osm2po.config
 COPY ./db-import-entrypoint.sh /entrypoint.sh
 
 RUN ["chmod", "+x", "/entrypoint.sh"]
+RUN dos2unix /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

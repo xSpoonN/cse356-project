@@ -71,6 +71,31 @@ services:
         tag: backend
         fluentd-async-connect: 'true'
     restart: always
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == manager
+
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'root'
+      MONGO_INITDB_ROOT_PASSWORD: 'password'
+      MONGO_INITDB_DATABASE: 'user'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == manager
 
   tile-server:
     container_name: tile-server
@@ -112,8 +137,46 @@ services:
     deploy:
       placement:
         constraints:
-          - node.role == worker
+          - node.hostname == nominatim
+
+  pgrouting:
+    container_name: pgrouting
+    image: pgrouting/pgrouting:latest
+    volumes:
+      - routing-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: routing
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 3s
+      timeout: 5s
+      retries: 10
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == router
+
+  db-import:
+    build:
+      context: ./docker/
+      dockerfile: ./db-import.Dockerfile
+    container_name: db-import
+    volumes:
+      - import-data:/data
+    restart: 'no'
+    depends_on:
+      pgrouting:
+        condition: service_healthy
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == router
 
 volumes:
   osm-data:
   nominatim-data:
+  routing-data:
+  mongo-data:
+  mongo-config:
+  import-data:

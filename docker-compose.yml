@@ -64,6 +64,9 @@ services:
   mongo:
     container_name: mongo
     image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
     environment:
       MONGO_INITDB_ROOT_USERNAME: 'root'
       MONGO_INITDB_ROOT_PASSWORD: 'password'
@@ -99,6 +102,38 @@ services:
       - nominatim-data:/var/lib/postgresql/14/main
     shm_size: 2gb
 
+  pgrouting:
+    container_name: pgrouting
+    image: pgrouting/pgrouting:latest
+    ports:
+      - '5433:5432'
+    volumes:
+      - routing-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: routing
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  db-import:
+    build:
+      context: ./docker/
+      dockerfile: ./db-import.Dockerfile
+    container_name: db-import
+    volumes:
+      - import-data:/data
+    restart: 'no'
+    depends_on:
+      pgrouting:
+        condition: service_healthy
+
 volumes:
   osm-data:
   nominatim-data:
+  routing-data:
+  mongo-data:
+  mongo-config:
+  import-data:

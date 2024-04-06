@@ -40,8 +40,8 @@ const userRouter = require('./routes/user');
 // Use routes
 app.use('/api', searchRouter);
 app.use('/api', userRouter);
+app.use('/api', routingRouter);
 app.use(tileRouter);
-app.use(routingRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

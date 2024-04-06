@@ -59,4 +59,10 @@ router.post('/convert', async (req, res) => {
   return res.status(200).json({ x_tile, y_tile });
 });
 
+router.get('/turn/$TL/$BR.png', async (req, res) => {
+  const { TL, BR } = req.params;
+
+  return res.status(200).json('HELLO WORLD');
+});
+
 module.exports = router;

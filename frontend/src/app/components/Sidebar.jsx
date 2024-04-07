@@ -13,6 +13,7 @@ export default function Sidebar({ map, bbox }) {
   const [dest, setDest] = useState({ name: '', lat: 0, lon: 0 });
   const [mode, setMode] = useState('search'); // search or route
   const [selecting, setSelecting] = useState('dst'); // Selecting src or dst
+  const [loading, setLoading] = useState(false);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -71,16 +72,19 @@ export default function Sidebar({ map, bbox }) {
   useEffect(() => {
     if (!map || !routeResults) return;
     markerLayerRef.current.clearLayers();
-    routeResults.forEach(result => {
-      L.marker([result.coordinates.lat, result.coordinates.lon])
-        .addTo(markerLayerRef.current)
-        .bindPopup(result.description);
+    if (routeResults.length === 0) return;
+    if (routeResults.length <= 200) {
+      routeResults.forEach(result => {
+        L.marker([result.coordinates.lat, result.coordinates.lon])
+          .addTo(markerLayerRef.current)
+          .bindPopup(result.description);
 
-      // Debugging /turn api
-      console.log(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/turn/lat,lon/lat,lon`
-      );
-    });
+        // Debugging /turn api
+        console.log(
+          `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/turn/lat,lon/lat,lon`
+        );
+      });
+    }
     const stepNumbers = routeResults.map(entry => {
       return { ...entry, order: entry.description.split(' ')[1] };
     });
@@ -156,6 +160,7 @@ export default function Sidebar({ map, bbox }) {
   };
 
   const route = async () => {
+    setLoading(true);
     try {
       const [turns, full] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route`, {
@@ -196,10 +201,12 @@ export default function Sidebar({ map, bbox }) {
       ]);
       console.log('route data: ', { turns, full });
 
-      setRouteResults(full);
+      setRouteResults(turns);
       setSearchResults([]);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -383,15 +390,6 @@ export default function Sidebar({ map, bbox }) {
       </div>
       <br />
       <br />
-      {loggedIn && (
-        <button
-          className="mt-2 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 mt-auto"
-          onClick={logoutAccount}
-        >
-          {' '}
-          Logout{' '}
-        </button>
-      )}
       {!loggedIn && (
         <>
           <input
@@ -449,6 +447,20 @@ export default function Sidebar({ map, bbox }) {
             )}
           </div>
         </>
+      )}
+      {loading && (
+        <div className="flex justify-center items-center mt-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+      {loggedIn && (
+        <button
+          className="mt-2 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 mt-auto"
+          onClick={logoutAccount}
+        >
+          {' '}
+          Logout{' '}
+        </button>
       )}
     </div>
   );

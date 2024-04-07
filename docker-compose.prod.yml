@@ -23,15 +23,16 @@ services:
       context: ./frontend/
       dockerfile: ../docker/frontend.prod.Dockerfile
     image: 127.0.0.1:5000/next
-    restart: always
     depends_on:
       - fluentd
+      - backend
     logging:
       driver: 'fluentd'
       options:
         fluentd-address: 127.0.0.1:24224
         tag: frontend
         fluentd-async-connect: 'true'
+    restart: always
     deploy:
       placement:
         constraints:
@@ -64,6 +65,8 @@ services:
     depends_on:
       - tile-server
       - nominatim
+      - pgrouting
+      - mongo
     logging:
       driver: 'fluentd'
       options:
@@ -113,6 +116,9 @@ services:
       DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
       THREADS: 2
     deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
       placement:
         constraints:
           - node.hostname == tile-server
@@ -135,6 +141,9 @@ services:
           size: 4294967296 # half of total memory
     restart: always
     deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
       placement:
         constraints:
           - node.hostname == nominatim
@@ -153,6 +162,9 @@ services:
       timeout: 5s
       retries: 10
     deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
       placement:
         constraints:
           - node.hostname == router
@@ -173,6 +185,58 @@ services:
         constraints:
           - node.hostname == router
 
+  glances:
+    image: nicolargo/glances:latest-full
+    restart: always
+    pid: 'host'
+    privileged: true
+    ports:
+      - 61208:61208
+      - 61209:61209
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: America/New_York
+      GLANCES_OPT: -C /glances/conf/glances.conf -w
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  portainer-agent:
+    image: portainer/agent:2.19.4
+    networks:
+      - agent_network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.platform.os == linux
+
+  portainer:
+    image: portainer/portainer-ce:2.19.4
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    ports:
+      - '9443:9443'
+      - '9000:9000'
+      - '8000:8000'
+    volumes:
+      - portainer_data:/data
+    networks:
+      - agent_network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  agent_network:
+    driver: overlay
+    attachable: true
+
 volumes:
   osm-data:
   nominatim-data:
@@ -180,3 +244,4 @@ volumes:
   mongo-data:
   mongo-config:
   import-data:
+  portainer_data:

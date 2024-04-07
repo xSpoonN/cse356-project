@@ -37,49 +37,53 @@ router.post('/route', async (req, res) => {
     LIMIT 1
   ),
   destination AS (
-      SELECT target AS target_id
-      FROM us_northeast_2po_4pgr
-      ORDER BY geom_way <-> ST_SetSRID(ST_MakePoint($4, $3), 4326)
-      LIMIT 1
+    SELECT target AS target_id
+    FROM us_northeast_2po_4pgr
+    ORDER BY geom_way <-> ST_SetSRID(ST_MakePoint($4, $3), 4326)
+    LIMIT 1
   ),
   route AS (
-      SELECT * FROM pgr_dijkstra(
-          'SELECT id, source, target, cost, reverse_cost FROM us_northeast_2po_4pgr',
-          (SELECT source_id FROM source),
-          (SELECT target_id FROM destination),
-          FALSE
-      )
+    SELECT * FROM pgr_dijkstra(
+      'SELECT id, source, target, cost, reverse_cost FROM us_northeast_2po_4pgr',
+      (SELECT source_id FROM source),
+      (SELECT target_id FROM destination),
+      FALSE
+    )
   ),
   route_with_geom AS (
-      SELECT r.seq, r.node, r.edge, r.cost, r.agg_cost,
-            w.geom_way,
-            ST_X(ST_StartPoint(w.geom_way)) AS lon,
-            ST_Y(ST_StartPoint(w.geom_way)) AS lat,
-            w.osm_name AS name
+      SELECT DISTINCT ON(lon,lat) 
+        r.seq, r.node, r.edge, r.cost, r.agg_cost,
+        w.geom_way,
+        ST_X(ST_StartPoint(w.geom_way)) AS lon,
+        ST_Y(ST_StartPoint(w.geom_way)) AS lat,
+        w.osm_name AS name
       FROM route r
       JOIN us_northeast_2po_4pgr w ON r.edge = w.id
   ),
-  route_with_azimuth AS (
-      SELECT *,
-            LAG(ST_EndPoint(geom_way)) OVER (ORDER BY seq) AS prev_point,
-            ST_StartPoint(geom_way) AS curr_point,
-            LEAD(ST_StartPoint(geom_way)) OVER (ORDER BY seq) AS next_point
-      FROM route_with_geom
+  route_with_degrees AS (
+    SELECT *,
+      CASE 
+        WHEN LAG(geom_way) OVER (ORDER BY seq) IS NULL THEN ST_StartPoint(geom_way)
+        ELSE LAG(ST_StartPoint(geom_way)) OVER (ORDER BY seq)
+      END AS prev_point,
+      CASE 
+        WHEN LAG(geom_way) OVER (ORDER BY seq) IS NULL THEN ST_EndPoint(geom_way)
+        ELSE ST_StartPoint(geom_way)
+      END AS curr_point,
+      CASE
+        WHEN LEAD(geom_way) OVER (ORDER BY seq) IS NULL THEN ST_EndPoint(geom_way)
+        ELSE LEAD(ST_StartPoint(geom_way)) OVER (ORDER BY seq)
+    END AS next_point
+    FROM route_with_geom
   ),
   route_with_turns AS (
-      SELECT seq, name, node, edge, cost, agg_cost, lon, lat,
-            DEGREES(ST_Azimuth(prev_point, curr_point)) AS prev_azimuth,
-            DEGREES(ST_Azimuth(curr_point, next_point)) AS next_azimuth,
-            CASE
-                WHEN ABS(DEGREES(ST_Azimuth(prev_point, curr_point)) - DEGREES(ST_Azimuth(curr_point, next_point))) > 45 THEN 'Turn'
-                ELSE 'Straight'
-            END AS turn_type
-      FROM route_with_azimuth
-      WHERE prev_point IS NOT NULL AND next_point IS NOT NULL
+    SELECT seq, name, node, edge, cost, agg_cost, lon, lat,
+      DEGREES(ST_Angle(prev_point,curr_point,next_point)) as angle
+    FROM route_with_degrees
   )
-  SELECT seq, name, node, edge, cost, agg_cost, lon, lat, turn_type
-  FROM route_with_turns
-  WHERE turn_type = 'Turn';
+  SELECT * FROM route_with_turns
+  WHERE (angle >= 45 AND angle <= 135)
+	  OR (angle >= 225 AND angle <= 315);
   `;
   try {
     const query_res = await client.query(sql, [srcLat, srcLon, dstLat, dstLon]);
@@ -126,18 +130,13 @@ router.post('/route/full', async (req, res) => {
           (SELECT target_id FROM destination),
           FALSE
       )
-  ),
-  route_with_geom AS (
-      SELECT r.seq, r.node, r.edge, r.cost, r.agg_cost,
-            w.geom_way,
-            ST_X(ST_StartPoint(w.geom_way)) AS lon,
-            ST_Y(ST_StartPoint(w.geom_way)) AS lat,
-            w.osm_name AS name
-      FROM route r
-      JOIN us_northeast_2po_4pgr w ON r.edge = w.id
   )
-  SELECT seq, name, node, edge, cost, agg_cost, lon, lat
-  FROM route_with_geom;
+  SELECT DISTINCT ON(lon,lat)
+    r.seq, r.node, r.edge, r.cost, r.agg_cost, w.geom_way,
+    ST_X(ST_StartPoint(w.geom_way)) AS lon,
+    ST_Y(ST_StartPoint(w.geom_way)) AS lat
+  FROM route r
+  JOIN us_northeast_2po_4pgr w ON r.edge = w.id;
   `;
 
   try {

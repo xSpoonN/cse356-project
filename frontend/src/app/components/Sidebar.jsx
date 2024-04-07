@@ -181,7 +181,7 @@ export default function Sidebar({ map, bbox }) {
       ]);
       console.log('route data: ', { turns, full });
 
-      setRouteResults(turns);
+      setRouteResults(full);
       setSearchResults([]);
     } catch (error) {
       console.error(error);

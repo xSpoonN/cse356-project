@@ -21,6 +21,7 @@ export default function Sidebar({ map, bbox }) {
   const [register, setRegister] = useState(false); // Register or login
   const [loggedIn, setLoggedIn] = useState(false); // @todo: Temporary, need to check cookies.
   const markerLayerRef = useRef(null);
+  const routeLayerRef = useRef(null);
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -40,6 +41,7 @@ export default function Sidebar({ map, bbox }) {
 
   useEffect(() => {
     if (map) markerLayerRef.current = L.featureGroup().addTo(map);
+    if (map) routeLayerRef.current = L.featureGroup().addTo(map);
   }, [map]);
 
   useEffect(() => {
@@ -72,34 +74,84 @@ export default function Sidebar({ map, bbox }) {
   useEffect(() => {
     if (!map || !routeResults) return;
     markerLayerRef.current.clearLayers();
-    if (routeResults.length === 0) return;
-    if (routeResults.length <= 200) {
-      routeResults.forEach(result => {
-        L.marker([result.coordinates.lat, result.coordinates.lon])
-          .addTo(markerLayerRef.current)
-          .bindPopup(result.description);
-
-        // Debugging /turn api
-        console.log(
-          `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/turn/lat,lon/lat,lon`
+    routeLayerRef.current.clearLayers();
+    const useFull = true;
+    let results = useFull ? routeResults.full : routeResults.turns;
+    if (results.length === 0) return;
+    if (!useFull) {
+      if (results.length <= 200) {
+        results.forEach(result => {
+          L.marker([result.coordinates.lat, result.coordinates.lon])
+            .addTo(markerLayerRef.current)
+            .bindPopup(result.description);
+        });
+      }
+      const stepNumbers = results.map(entry => {
+        return { ...entry, order: entry.description.split(' ')[1] };
+      });
+      const sortedSteps = stepNumbers.sort((a, b) => a.order - b.order);
+      const routeLineCoords = [
+        [source.lat, source.lon],
+        ...sortedSteps.map(result => {
+          return [result.coordinates.lat, result.coordinates.lon];
+        }),
+        [dest.lat, dest.lon],
+      ];
+      console.log(routeLineCoords);
+      L.polyline(routeLineCoords, { color: 'blue' }).addTo(
+        routeLayerRef.current
+      );
+    } else {
+      let transformedResults = [];
+      results.forEach(result => {
+        transformedResults.push(
+          {
+            description: result.description,
+            coordinates: {
+              lat: result.edge[1][1],
+              lon: result.edge[1][0],
+            },
+          },
+          {
+            description: result.description,
+            coordinates: {
+              lat: result.edge[0][1],
+              lon: result.edge[0][0],
+            },
+          }
         );
       });
+      const uniques = new Set();
+      transformedResults = transformedResults.filter(entry => {
+        const key = `${entry.coordinates.lat},${entry.coordinates.lon}`;
+        if (uniques.has(key)) return false;
+        uniques.add(key);
+        return true;
+      });
+
+      if (transformedResults.length <= 200) {
+        transformedResults.forEach(result => {
+          L.marker([result.coordinates.lat, result.coordinates.lon])
+            .addTo(routeLayerRef.current)
+            .bindPopup(result.description);
+        });
+      }
+      const stepNumbers = transformedResults.map(entry => {
+        return { ...entry, order: entry.description.split(' ')[1] };
+      });
+      const sortedSteps = stepNumbers.sort((a, b) => a.order - b.order);
+      const routeLineCoords = [
+        [source.lat, source.lon],
+        ...sortedSteps.map(result => {
+          return [result.coordinates.lat, result.coordinates.lon];
+        }),
+        [dest.lat, dest.lon],
+      ];
+      console.log(routeLineCoords);
+      L.polyline(routeLineCoords, { color: 'blue' }).addTo(
+        markerLayerRef.current
+      );
     }
-    const stepNumbers = routeResults.map(entry => {
-      return { ...entry, order: entry.description.split(' ')[1] };
-    });
-    const sortedSteps = stepNumbers.sort((a, b) => a.order - b.order);
-    const routeLineCoords = [
-      [source.lat, source.lon],
-      ...sortedSteps.map(result => {
-        return [result.coordinates.lat, result.coordinates.lon];
-      }),
-      [dest.lat, dest.lon],
-    ];
-    console.log(routeLineCoords);
-    L.polyline(routeLineCoords, { color: 'blue' }).addTo(
-      markerLayerRef.current
-    );
 
     L.marker([source.lat, source.lon], {
       icon: L.icon({ iconUrl: '/icon-red.png', iconSize: [25, 38] }),
@@ -201,7 +253,7 @@ export default function Sidebar({ map, bbox }) {
       ]);
       console.log('route data: ', { turns, full });
 
-      setRouteResults(turns);
+      setRouteResults({ turns, full });
       setSearchResults([]);
     } catch (error) {
       console.error(error);

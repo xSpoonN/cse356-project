@@ -81,6 +81,21 @@ export default function Sidebar({ map, bbox }) {
         `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/turn/lat,lon/lat,lon`
       );
     });
+    const stepNumbers = routeResults.map(entry => {
+      return { ...entry, order: entry.description.split(' ')[1] };
+    });
+    const sortedSteps = stepNumbers.sort((a, b) => a.order - b.order);
+    const routeLineCoords = [
+      [source.lat, source.lon],
+      ...sortedSteps.map(result => {
+        return [result.coordinates.lat, result.coordinates.lon];
+      }),
+      [dest.lat, dest.lon],
+    ];
+    console.log(routeLineCoords);
+    L.polyline(routeLineCoords, { color: 'blue' }).addTo(
+      markerLayerRef.current
+    );
 
     L.marker([source.lat, source.lon], {
       icon: L.icon({ iconUrl: '/icon-red.png', iconSize: [25, 38] }),

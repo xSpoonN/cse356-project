@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "geojson-polyline": "^1.0.3",
     "leaflet": "^1.9.4",
     "next": "14.1.4",
     "node-addon-api": "^8.0.0",

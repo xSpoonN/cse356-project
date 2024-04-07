@@ -69,7 +69,7 @@ export default function Sidebar({ map, bbox }) {
   }, [searchResults]);
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !routeResults) return;
     markerLayerRef.current.clearLayers();
     routeResults.forEach(result => {
       L.marker([result.coordinates.lat, result.coordinates.lon])

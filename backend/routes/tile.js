@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const sharp = require('sharp');
 
 router = express.Router();
 
@@ -17,19 +18,10 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
     path: `/tile/${layer2}/${v}/${h}`,
     method: 'GET',
   };
+  console.log(options.path);
 
   try {
-    const tile_res = await new Promise((resolve, reject) => {
-      const tile_req = http.request(options, response => {
-        const chunks = [];
-        response.on('data', chunk => chunks.push(chunk));
-        response.on('end', () => resolve(Buffer.concat(chunks)));
-        response.on('error', err => reject(new Error('Internal Server Error')));
-      });
-      tile_req.on('error', err => reject(new Error('Internal Server Error')));
-      tile_req.end();
-    });
-
+    const tile_res = await getTile(options);
     res.writeHead(200, { 'Content-Type': 'image/png' });
     res.end(tile_res);
   } catch (error) {
@@ -43,6 +35,104 @@ router.post('/convert', async (req, res) => {
   [lat, long, zoom] = [+lat, +long, +zoom];
   console.log(`POST /convert: { lat: ${lat}, long: ${long}, zoom: ${zoom} }`);
 
+  const { x_tile, y_tile } = convertToTile(lat, long, zoom);
+  console.log(`res: { x_tile: ${x_tile}, y_tile: ${y_tile} }`);
+  return res.status(200).json({ x_tile, y_tile });
+});
+
+router.get('/turn/:TL/:BR', async (req, res) => {
+  if (!req.session.username)
+    return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
+  const { TL, BR } = req.params;
+  const tl = { lat: +TL.split(',')[0], long: +TL.split(',')[1] };
+  const br = {
+    lat: +BR.split('.png')[0].split(',')[0],
+    long: +BR.split('.png')[0].split(',')[1],
+  };
+  console.log(
+    `GET /turn: { TL: ${JSON.stringify(tl)}, BR: ${JSON.stringify(br)} }`
+  );
+  const zoom = 18;
+
+  const { x_tile: x_tile_tl, y_tile: y_tile_tl } = convertToTile(
+    tl.lat,
+    tl.long,
+    zoom
+  );
+  const { x_tile: x_tile_br, y_tile: y_tile_br } = convertToTile(
+    br.lat,
+    br.long,
+    zoom
+  );
+  console.log(
+    `res: { x_tile_tl: ${x_tile_tl}, y_tile_tl: ${y_tile_tl}, x_tile_br: ${x_tile_br}, y_tile_br: ${y_tile_br} }`
+  );
+  const images = [];
+  console.log(x_tile_br - x_tile_tl + 1, y_tile_br - y_tile_tl + 1);
+  for (let row = 0; row < y_tile_br - y_tile_tl + 1; row++) {
+    for (let col = 0; col < x_tile_br - x_tile_tl + 1; col++) {
+      const options = {
+        hostname:
+          process.env.BUILD_ENVIRONMENT === 'docker'
+            ? 'tile-server'
+            : 'localhost',
+        port: process.env.BUILD_ENVIRONMENT === 'docker' ? 80 : 8080,
+        path: `/tile/${zoom}/${x_tile_tl + col}/${y_tile_tl + row}.png`,
+        method: 'GET',
+      };
+      console.log(options.path);
+
+      try {
+        const tile_res = await getTile(options);
+        images.push({ buffer: tile_res, x: col * 256, y: row * 256 });
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ status: 'ERROR', message: 'Internal Server Error' });
+      }
+    }
+  }
+  const width = (x_tile_br - x_tile_tl + 1) * 256;
+  const height = (y_tile_br - y_tile_tl + 1) * 256;
+  console.log(`width: ${width}, height: ${height}`);
+  console.log(images);
+  let mergedImage = sharp({
+    create: {
+      width: width,
+      height: height,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    },
+  });
+  /* images.forEach(async (image) => {
+    mergedImage.composite([{ input: image.buffer, top: image.y, left: image.x, blend: 'over'}]);
+  }); */
+  await mergedImage.composite(
+    images.map(image => ({
+      input: image.buffer,
+      top: image.y,
+      left: image.x,
+      blend: 'over',
+    }))
+  );
+  /* for (img of images) {
+    await mergedImage.composite([{ input: img.buffer, top: img.y, left: img.x, blend: 'over'}]);
+    console.log(`composite: { x: ${img.x}, y: ${img.y} }`)
+  } */
+  mergedImage = await mergedImage.png().toBuffer();
+  console.log(mergedImage);
+  res.writeHead(200, { 'Content-Type': 'image/png' });
+  return res.end(mergedImage);
+  const resizedImage = await sharp(mergedImage)
+    .flatten()
+    .resize(100, 100)
+    .toBuffer();
+  res.writeHead(200, { 'Content-Type': 'image/png' });
+  return res.end(resizedImage);
+});
+
+const convertToTile = (lat, long, zoom) => {
   // Calculate tile indices - https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Implementations
   const x_tile = Math.floor(((long + 180) / 360) * Math.pow(2, zoom));
   const y_tile = Math.floor(
@@ -54,17 +144,42 @@ router.post('/convert', async (req, res) => {
       2) *
       Math.pow(2, zoom)
   );
-  console.log(`res: { x_tile: ${x_tile}, y_tile: ${y_tile} }`);
-  return res.status(200).json({ x_tile, y_tile });
-});
+  return { x_tile, y_tile };
+};
 
-router.get('/turn/$TL/$BR.png', async (req, res) => {
-  if (!req.session.username)
-    return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
+const getTile = async options => {
+  return new Promise((resolve, reject) => {
+    const tile_req = http.request(options, response => {
+      const chunks = [];
+      response.on('data', chunk => chunks.push(chunk));
+      response.on('end', () => resolve(Buffer.concat(chunks)));
+      response.on('error', err => reject(new Error('Internal Server Error')));
+    });
+    tile_req.on('error', err => reject(new Error('Internal Server Error')));
+    tile_req.end();
+  });
+};
 
-  const { TL, BR } = req.params;
+const getTurnTile = async options => {
+  return new Promise((resolve, reject) => {
+    const tile_req = http.request(options, response => {
+      const chunks = [];
+      console.log(response);
+      const contentType = response.headers['content-type'];
 
-  return res.status(200).json('HELLO WORLD');
-});
+      if (!contentType || !contentType.includes('image/')) {
+        reject(new Error('Invalid response: expected image data'));
+        return;
+      }
+
+      response.on('data', chunk => chunks.push(chunk));
+      response.on('end', () => resolve(Buffer.concat(chunks)));
+      response.on('error', err => reject(new Error('Internal Server Error')));
+    });
+
+    tile_req.on('error', err => reject(new Error('Internal Server Error')));
+    tile_req.end();
+  });
+};
 
 module.exports = router;

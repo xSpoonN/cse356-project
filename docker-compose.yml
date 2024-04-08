@@ -130,6 +130,29 @@ services:
       pgrouting:
         condition: service_healthy
 
+  glances:
+    image: nicolargo/glances:latest-full
+    restart: always
+    pid: 'host'
+    privileged: true
+    ports:
+      - 61208:61208
+      - 61209:61209
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: America/New_York
+      GLANCES_OPT: -C /glances/conf/glances.conf -w
+
+  portainer:
+    image: portainer/portainer-ce:2.19.4
+    ports:
+      - '9443:9443'
+      - '8000:8000'
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   osm-data:
   nominatim-data:
@@ -137,3 +160,4 @@ volumes:
   mongo-data:
   mongo-config:
   import-data:
+  portainer_data:

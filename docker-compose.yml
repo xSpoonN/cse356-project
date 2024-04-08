@@ -1,14 +1,33 @@
+x-logging-options: &logging
+  logging:
+    driver: 'fluentd'
+    options:
+      tag: '{{.Name}}'
+      fluentd-address: localhost:24224
+      fluentd-async-connect: 'true'
+
+volumes:
+  osm-data:
+  nominatim-data:
+  routing-data:
+  mongo-data:
+  mongo-config:
+  import-data:
+  portainer_data:
+
 services:
-  reverse_proxy:
+  nginx:
     container_name: nginx
     image: nginx:latest
     ports:
       - '80:80'
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - frontend
       - backend
+    <<: *logging
 
   frontend:
     container_name: frontend
@@ -19,14 +38,7 @@ services:
       - ./frontend/src:/app/src
     depends_on:
       - fluentd
-      - tile-server
-      - nominatim
-    logging:
-      driver: 'fluentd'
-      options:
-        fluentd-address: 127.0.0.1:24224
-        tag: frontend
-        fluentd-async-connect: 'true'
+      - backend
     restart: always
 
   fluentd:
@@ -35,11 +47,11 @@ services:
       context: ./docker/
       dockerfile: ./fluentd.Dockerfile
     volumes:
+      - ./docker/fluent.conf:/fluentd/etc/fluent.conf
       - ./logs/:/var/log/fluentd/
     ports:
       - '24224:24224'
       - '24224:24224/udp'
-    restart: always
 
   backend:
     container_name: backend
@@ -52,14 +64,10 @@ services:
     depends_on:
       - tile-server
       - nominatim
+      - pgrouting
       - mongo
-    logging:
-      driver: 'fluentd'
-      options:
-        fluentd-address: 127.0.0.1:24224
-        tag: backend
-        fluentd-async-connect: 'true'
     restart: always
+    <<: *logging
 
   mongo:
     container_name: mongo
@@ -71,6 +79,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: 'root'
       MONGO_INITDB_ROOT_PASSWORD: 'password'
       MONGO_INITDB_DATABASE: 'user'
+    restart: always
 
   tile-server:
     container_name: tile-server
@@ -85,6 +94,7 @@ services:
     environment:
       DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
     shm_size: 256mb
+    restart: always
 
   nominatim:
     container_name: nominatim
@@ -117,6 +127,7 @@ services:
       interval: 3s
       timeout: 5s
       retries: 10
+    restart: always
 
   db-import:
     build:
@@ -131,6 +142,7 @@ services:
         condition: service_healthy
 
   glances:
+    container_name: glances
     image: nicolargo/glances:latest-full
     restart: always
     pid: 'host'
@@ -145,6 +157,7 @@ services:
       GLANCES_OPT: -C /glances/conf/glances.conf -w
 
   portainer:
+    container_name: portainer
     image: portainer/portainer-ce:2.19.4
     ports:
       - '9443:9443'
@@ -152,12 +165,3 @@ services:
     volumes:
       - portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
-
-volumes:
-  osm-data:
-  nominatim-data:
-  routing-data:
-  mongo-data:
-  mongo-config:
-  import-data:
-  portainer_data:

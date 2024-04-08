@@ -16,17 +16,20 @@ async function connect_db() {
 router = express.Router();
 
 router.use((req, res, next) => {
-  if (!req.session.username)
+  if (!req.session.username) {
+    console.warn('Received unauthorized request');
     return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
+  }
 
   next();
 });
 
 router.post('/route', async (req, res) => {
+  console.log('Received /route request');
+
   const { source, destination } = req.body;
   const { lat: srcLat, lon: srcLon } = source;
   const { lat: dstLat, lon: dstLon } = destination;
-  console.log('REQUEST: ', source, destination);
 
   const client = await connect_db();
   const sql = `
@@ -71,8 +74,8 @@ router.post('/route', async (req, res) => {
 	  OR (angle >= 225 AND angle <= 315);
   `;
   try {
+    console.log('Executing query');
     const query_res = await client.query(sql, [srcLat, srcLon, dstLat, dstLon]);
-    console.log('RESULT: ', query_res.rows);
     const route = query_res.rows.map(row => ({
       description: `Step ${row.seq} (${row.name}): Move to node ${row.node} via edge ${row.edge}. Cost: ${row.cost}, Aggregate cost: ${row.agg_cost}`,
       coordinates: {
@@ -128,7 +131,6 @@ router.post('/route/full', async (req, res) => {
 
   try {
     const query_res = await client.query(sql, [srcLat, srcLon, dstLat, dstLon]);
-    console.log('RESULT: ', query_res.rows);
     const route = query_res.rows.map(row => ({
       description: `Step ${row.seq} (${row.name}): Move to node ${row.node} via edge ${row.edge}. Cost: ${row.cost}, Aggregate cost: ${row.agg_cost}`,
       edge: [

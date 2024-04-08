@@ -5,14 +5,34 @@ const MongoStore = require('connect-mongo');
 const app = express();
 const port = 3000;
 
-// @todo: FIX THIS
 const clientPromise = mongoose
   .connect('mongodb://root:password@mongo:27017/user?authSource=admin')
   .then(m => m.connection.getClient());
+const log_types = {
+  log: { console: console.log, prefix: '[INFO]' },
+  warn: { console: console.warn, prefix: '[WARN]' },
+  debug: { console: console.debug, prefix: '[DEBUG]' },
+  error: { console: console.error, prefix: '[ERROR]' },
+};
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
+  // Add prefixes to console
+  const request_id = req.headers['x-request-id'];
+  (function () {
+    Object.keys(log_types).forEach(type => {
+      const original_log = log_types[type].console;
+      console[type] = function (...args) {
+        original_log.apply(console, [
+          `${log_types[type].prefix} ${request_id} - `,
+          ...args,
+        ]);
+      };
+    });
+  })();
+
+  // Cors settings
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header(
@@ -21,6 +41,7 @@ app.use((req, res, next) => {
   );
   next();
 });
+
 app.use(
   session({
     resave: false,

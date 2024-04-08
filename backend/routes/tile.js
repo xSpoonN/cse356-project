@@ -5,6 +5,8 @@ const sharp = require('sharp');
 router = express.Router();
 
 router.get('/tiles/:layer/:v/:h', async (req, res) => {
+  console.log('Received /tiles request');
+
   const { layer, v, h } = req.params;
   if (isNaN(parseInt(v)) || isNaN(parseInt(h))) {
     return res.status(404).json({ status: 'ERROR', message: 'Tile Not Found' });
@@ -30,9 +32,9 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
 });
 
 router.post('/convert', async (req, res) => {
+  console.log('Received /convert request');
   let { lat, long, zoom } = req.body;
   [lat, long, zoom] = [+lat, +long, +zoom];
-  console.log(`POST /convert: { lat: ${lat}, long: ${long}, zoom: ${zoom} }`);
 
   const { x_tile, y_tile } = convertToTile(lat, long, zoom);
   console.log(`res: { x_tile: ${x_tile}, y_tile: ${y_tile} }`);
@@ -40,15 +42,17 @@ router.post('/convert', async (req, res) => {
 });
 
 router.get('/turn/:TL/:BR', async (req, res) => {
-  if (!req.session.username)
+  console.log('Received /turn request');
+  if (!req.session.username) {
+    console.warn('Unauthorized reuqest');
     return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
+  }
   const { TL, BR } = req.params;
   const tl = { lat: +TL.split(',')[0], long: +TL.split(',')[1] };
   const br = {
     lat: +BR.split('.png')[0].split(',')[0],
     long: +BR.split('.png')[0].split(',')[1],
   };
-  // console.log(`GET /turn: { TL: ${JSON.stringify(tl)}, BR: ${JSON.stringify(br)} }`);
   const zoom = 18;
 
   const { x_tile: x_tile_tl, y_tile: y_tile_tl } = convertToTile(
@@ -61,11 +65,10 @@ router.get('/turn/:TL/:BR', async (req, res) => {
     br.long,
     zoom
   );
-  console.log(
+  console.debug(
     `Tile Coords: { x_tile_tl: ${x_tile_tl}, y_tile_tl: ${y_tile_tl}, x_tile_br: ${x_tile_br}, y_tile_br: ${y_tile_br} }`
   );
   const images = [];
-  // console.log(x_tile_br - x_tile_tl + 1, y_tile_br - y_tile_tl + 1);
   for (let row = 0; row < y_tile_br - y_tile_tl + 1; row++) {
     for (let col = 0; col < x_tile_br - x_tile_tl + 1; col++) {
       const options = {
@@ -89,8 +92,7 @@ router.get('/turn/:TL/:BR', async (req, res) => {
       }
     }
   }
-  // console.log(`width: ${width}, height: ${height}`);
-  // console.log(images);
+
   let mergedImage = sharp({
     create: {
       width: (x_tile_br - x_tile_tl + 1) * 256,
@@ -112,9 +114,8 @@ router.get('/turn/:TL/:BR', async (req, res) => {
     .flatten()
     .resize(100, 100)
     .toBuffer();
-  // console.log(resizedImage);
-  res.writeHead(200, { 'Content-Type': 'image/png' });
-  return res.end(resizedImage);
+
+  return res.writeHead(200, { 'Content-Type': 'image/png' }).end(resizedImage);
 });
 
 const convertToTile = (lat, long, zoom) => {

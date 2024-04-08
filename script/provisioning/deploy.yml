@@ -41,6 +41,11 @@
         name: docker
         state: started
 
+    - name: Add a line to /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars[groups['main'][0]]['ansible_default_ipv4']['address'] }} fluentd"
+
 - name: Clone the git repository
   hosts: swarm_manager
   become: yes

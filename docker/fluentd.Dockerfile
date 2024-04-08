@@ -4,6 +4,9 @@ FROM fluentd
 # Switch to root to perform administrative tasks
 USER root
 
+# Install the necessary plugins
+RUN gem install fluent-plugin-rewrite-tag-filter fluent-plugin-concat
+
 # Create necessary directories and adjust permissions
 RUN mkdir -p /var/log/fluentd
 RUN chown -R fluent:fluent /var/log/fluentd

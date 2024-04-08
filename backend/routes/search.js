@@ -29,15 +29,14 @@ router.post('/search', async (req, res) => {
     return d;
   }
 
+  console.log('Received /search request');
+
   const { bbox, onlyInBox, searchTerm } = req.body;
   const { minLat, minLon, maxLat, maxLon } = bbox;
   const boxCenter = [
     (parseFloat(minLat) + parseFloat(maxLat)) / 2,
     (parseFloat(minLon) + parseFloat(maxLon)) / 2,
   ];
-  console.log(
-    `POST /search: ${JSON.stringify({ bbox, onlyInBox, searchTerm })}`
-  );
 
   // Build search query
   let query = `http://${process.env.BUILD_ENVIRONMENT === 'docker' ? 'nominatim:8080' : 'localhost:9090'}/search?q=${searchTerm}`;
@@ -46,8 +45,8 @@ router.post('/search', async (req, res) => {
   }
 
   try {
+    console.log('Sending query to search service');
     let query_res = await (await fetch(query)).json();
-    console.log('result: ', query_res);
 
     if (onlyInBox) {
       query_res = query_res.map(row => {
@@ -86,12 +85,13 @@ router.post('/search', async (req, res) => {
       });
     }
     query_res.sort((a, b) => a.distance - b.distance);
-    console.log('Returned result: ', query_res);
 
     query_res = query_res.map(row => {
       delete row.distance;
       return row;
     });
+
+    console.debug(`Query result: ${JSON.stringify(query_res)}`);
 
     return res.status(200).json(query_res);
   } catch (err) {

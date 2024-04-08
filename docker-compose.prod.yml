@@ -1,3 +1,25 @@
+x-logging-options: &logging
+  logging:
+    driver: 'fluentd'
+    options:
+      tag: '{{.Name}}'
+      fluentd-address: localhost:24224
+      fluentd-async-connect: 'true'
+
+networks:
+  agent_network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  osm-data:
+  nominatim-data:
+  routing-data:
+  mongo-data:
+  mongo-config:
+  import-data:
+  portainer_data:
+
 services:
   reverse_proxy:
     container_name: nginx
@@ -6,16 +28,16 @@ services:
       - '80:80'
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./vhost.d:/etc/nginx/vhost.d:ro
     depends_on:
       - frontend
       - backend
     deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
       placement:
         constraints:
           - node.role == manager
+    <<: *logging
 
   frontend:
     container_name: frontend
@@ -50,9 +72,6 @@ services:
       - '24224:24224'
       - '24224:24224/udp'
     deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
       placement:
         constraints:
           - node.role == manager
@@ -67,12 +86,6 @@ services:
       - nominatim
       - pgrouting
       - mongo
-    logging:
-      driver: 'fluentd'
-      options:
-        fluentd-address: 127.0.0.1:24224
-        tag: backend
-        fluentd-async-connect: 'true'
     restart: always
     deploy:
       restart_policy:
@@ -81,6 +94,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+    <<: *logging
 
   mongo:
     container_name: mongo
@@ -92,10 +106,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: 'root'
       MONGO_INITDB_ROOT_PASSWORD: 'password'
       MONGO_INITDB_DATABASE: 'user'
+    restart: always
     deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
       placement:
         constraints:
           - node.role == manager
@@ -111,14 +123,12 @@ services:
       - type: tmpfs
         target: /dev/shm
         tmpfs:
-          size: 201326592 # 192MB
+          size: 268435456 # 256MB
     environment:
       DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
-      THREADS: 2
+      THREADS: 4
+    restart: always
     deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
       placement:
         constraints:
           - node.hostname == tile-server
@@ -141,9 +151,6 @@ services:
           size: 4294967296 # half of total memory
     restart: always
     deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
       placement:
         constraints:
           - node.hostname == nominatim
@@ -161,10 +168,8 @@ services:
       interval: 3s
       timeout: 5s
       retries: 10
+    restart: always
     deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
       placement:
         constraints:
           - node.hostname == router
@@ -187,17 +192,14 @@ services:
 
   glances:
     image: nicolargo/glances:latest-full
-    restart: always
     pid: 'host'
     privileged: true
-    ports:
-      - 61208:61208
-      - 61209:61209
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       TZ: America/New_York
       GLANCES_OPT: -C /glances/conf/glances.conf -w
+    restart: always
     deploy:
       placement:
         constraints:
@@ -219,10 +221,6 @@ services:
   portainer:
     image: portainer/portainer-ce:2.19.4
     command: -H tcp://tasks.agent:9001 --tlsskipverify
-    ports:
-      - '9443:9443'
-      - '9000:9000'
-      - '8000:8000'
     volumes:
       - portainer_data:/data
     networks:
@@ -231,17 +229,3 @@ services:
       placement:
         constraints:
           - node.role == manager
-
-networks:
-  agent_network:
-    driver: overlay
-    attachable: true
-
-volumes:
-  osm-data:
-  nominatim-data:
-  routing-data:
-  mongo-data:
-  mongo-config:
-  import-data:
-  portainer_data:

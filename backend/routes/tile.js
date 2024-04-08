@@ -18,7 +18,6 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
     path: `/tile/${layer2}/${v}/${h}`,
     method: 'GET',
   };
-  console.log(options.path);
 
   try {
     const tile_res = await getTile(options);
@@ -49,9 +48,7 @@ router.get('/turn/:TL/:BR', async (req, res) => {
     lat: +BR.split('.png')[0].split(',')[0],
     long: +BR.split('.png')[0].split(',')[1],
   };
-  console.log(
-    `GET /turn: { TL: ${JSON.stringify(tl)}, BR: ${JSON.stringify(br)} }`
-  );
+  // console.log(`GET /turn: { TL: ${JSON.stringify(tl)}, BR: ${JSON.stringify(br)} }`);
   const zoom = 18;
 
   const { x_tile: x_tile_tl, y_tile: y_tile_tl } = convertToTile(
@@ -65,10 +62,10 @@ router.get('/turn/:TL/:BR', async (req, res) => {
     zoom
   );
   console.log(
-    `res: { x_tile_tl: ${x_tile_tl}, y_tile_tl: ${y_tile_tl}, x_tile_br: ${x_tile_br}, y_tile_br: ${y_tile_br} }`
+    `Tile Coords: { x_tile_tl: ${x_tile_tl}, y_tile_tl: ${y_tile_tl}, x_tile_br: ${x_tile_br}, y_tile_br: ${y_tile_br} }`
   );
   const images = [];
-  console.log(x_tile_br - x_tile_tl + 1, y_tile_br - y_tile_tl + 1);
+  // console.log(x_tile_br - x_tile_tl + 1, y_tile_br - y_tile_tl + 1);
   for (let row = 0; row < y_tile_br - y_tile_tl + 1; row++) {
     for (let col = 0; col < x_tile_br - x_tile_tl + 1; col++) {
       const options = {
@@ -80,7 +77,6 @@ router.get('/turn/:TL/:BR', async (req, res) => {
         path: `/tile/${zoom}/${x_tile_tl + col}/${y_tile_tl + row}.png`,
         method: 'GET',
       };
-      console.log(options.path);
 
       try {
         const tile_res = await getTile(options);
@@ -93,21 +89,16 @@ router.get('/turn/:TL/:BR', async (req, res) => {
       }
     }
   }
-  const width = (x_tile_br - x_tile_tl + 1) * 256;
-  const height = (y_tile_br - y_tile_tl + 1) * 256;
-  console.log(`width: ${width}, height: ${height}`);
-  console.log(images);
+  // console.log(`width: ${width}, height: ${height}`);
+  // console.log(images);
   let mergedImage = sharp({
     create: {
-      width: width,
-      height: height,
+      width: (x_tile_br - x_tile_tl + 1) * 256,
+      height: (y_tile_br - y_tile_tl + 1) * 256,
       channels: 4,
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     },
   });
-  /* images.forEach(async (image) => {
-    mergedImage.composite([{ input: image.buffer, top: image.y, left: image.x, blend: 'over'}]);
-  }); */
   await mergedImage.composite(
     images.map(image => ({
       input: image.buffer,
@@ -116,18 +107,12 @@ router.get('/turn/:TL/:BR', async (req, res) => {
       blend: 'over',
     }))
   );
-  /* for (img of images) {
-    await mergedImage.composite([{ input: img.buffer, top: img.y, left: img.x, blend: 'over'}]);
-    console.log(`composite: { x: ${img.x}, y: ${img.y} }`)
-  } */
   mergedImage = await mergedImage.png().toBuffer();
-  console.log(mergedImage);
-  res.writeHead(200, { 'Content-Type': 'image/png' });
-  return res.end(mergedImage);
   const resizedImage = await sharp(mergedImage)
     .flatten()
     .resize(100, 100)
     .toBuffer();
+  // console.log(resizedImage);
   res.writeHead(200, { 'Content-Type': 'image/png' });
   return res.end(resizedImage);
 });
@@ -155,28 +140,6 @@ const getTile = async options => {
       response.on('end', () => resolve(Buffer.concat(chunks)));
       response.on('error', err => reject(new Error('Internal Server Error')));
     });
-    tile_req.on('error', err => reject(new Error('Internal Server Error')));
-    tile_req.end();
-  });
-};
-
-const getTurnTile = async options => {
-  return new Promise((resolve, reject) => {
-    const tile_req = http.request(options, response => {
-      const chunks = [];
-      console.log(response);
-      const contentType = response.headers['content-type'];
-
-      if (!contentType || !contentType.includes('image/')) {
-        reject(new Error('Invalid response: expected image data'));
-        return;
-      }
-
-      response.on('data', chunk => chunks.push(chunk));
-      response.on('end', () => resolve(Buffer.concat(chunks)));
-      response.on('error', err => reject(new Error('Internal Server Error')));
-    });
-
     tile_req.on('error', err => reject(new Error('Internal Server Error')));
     tile_req.end();
   });

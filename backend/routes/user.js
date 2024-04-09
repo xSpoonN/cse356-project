@@ -36,7 +36,7 @@ router.post('/adduser', async (req, res) => {
   const { body } = req;
   if (!('username' in body && 'password' in body && 'email' in body)) {
     console.warn('Missing required fields');
-    return res.status(500).send({
+    return res.status(200).send({
       status: 'ERROR',
       message: 'Username, password, and email are required',
     });
@@ -46,7 +46,7 @@ router.post('/adduser', async (req, res) => {
   // Check if username, password, and email are truthy value
   if (!username || !password || !email) {
     console.warn('Missing required fields');
-    return res.status(500).send({
+    return res.status(200).send({
       status: 'ERROR',
       message: 'Username, password, and email are required',
     });
@@ -56,7 +56,7 @@ router.post('/adduser', async (req, res) => {
   const emailRegex = /\S+@\S+\.\S+/;
   if (!emailRegex.test(email)) {
     console.warn('Email is invalid');
-    return res.status(500).send({ status: 'ERROR', message: 'Invalid email' });
+    return res.status(200).send({ status: 'ERROR', message: 'Invalid email' });
   }
 
   try {
@@ -64,7 +64,7 @@ router.post('/adduser', async (req, res) => {
     if (existingUser) {
       console.warn('User already exists');
       return res
-        .status(500)
+        .status(200)
         .send({ status: 'ERROR', message: 'User already exists' });
     }
 
@@ -120,7 +120,7 @@ router.post('/login', async (req, res) => {
   if (!('username' in body && 'password' in body)) {
     console.warn('Missing required fields');
     return res
-      .status(500)
+      .status(200)
       .send({ status: 'ERROR', message: 'Username and password are required' });
   }
   const { username, password } = body;
@@ -129,7 +129,7 @@ router.post('/login', async (req, res) => {
   if (!username || !password) {
     console.warn('Missing required fields');
     return res
-      .status(500)
+      .status(200)
       .send({ status: 'ERROR', message: 'Username and password are required' });
   }
 
@@ -138,7 +138,7 @@ router.post('/login', async (req, res) => {
   if (!user || user.password !== password || !user.verified) {
     console.warn('Invalid username or password');
     return res
-      .status(500)
+      .status(200)
       .send({ status: 'ERROR', message: 'Invalid username or password' });
   }
 
@@ -229,7 +229,7 @@ router.get('/verify', async (req, res) => {
   if (!('email' in req.query && 'key' in req.query)) {
     console.warn('Missing required fields');
     return res
-      .status(500)
+      .status(200)
       .send({ status: 'ERROR', message: 'Email and key are required' });
   }
   const { email, key } = req.query;
@@ -238,7 +238,7 @@ router.get('/verify', async (req, res) => {
   if (!email || !key) {
     console.warn('Missing required fields');
     return res
-      .status(500)
+      .status(200)
       .send({ status: 'ERROR', message: 'Email and key are required' });
   }
 

@@ -31,7 +31,7 @@ export default function Sidebar({ map, bbox }) {
           { method: 'POST' }
         );
         const data = await res.json();
-        if (res.ok && data.loggedin) setLoggedIn(true);
+        if (data.loggedin) setLoggedIn(true);
       } catch (error) {
         console.error(error);
       }
@@ -277,7 +277,9 @@ export default function Sidebar({ map, bbox }) {
           },
         }
       );
-      if (!res.ok) throw Error('Failed to login');
+      const data = await res.json();
+
+      if (data.status === 'ERROR') throw Error('Failed to login');
       setLoggedIn(true);
     } catch (error) {
       console.error(error);
@@ -300,7 +302,9 @@ export default function Sidebar({ map, bbox }) {
           },
         }
       );
-      if (!res.ok) throw Error('Failed to register');
+      const data = await res.json();
+
+      if (data.status === 'ERROR') throw Error('Failed to register');
       setRegister(false);
     } catch (error) {
       console.error(error);

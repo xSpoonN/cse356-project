@@ -18,7 +18,7 @@ router = express.Router();
 router.use((req, res, next) => {
   if (!req.session.username) {
     console.warn('Received unauthorized request');
-    return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
+    return res.status(200).json({ status: 'ERROR', message: 'Unauthorized' });
   }
 
   next();

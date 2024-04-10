@@ -70,10 +70,10 @@ router.post('/route', async (req, res) => {
     const route = query_res.rows.map(row => ({
       description: `Step ${row.seq} (${row.name}): Turn ${row.turn_direction} Move to node ${row.node} via edge ${row.edge}. Distance: ${row.distance}, Cost: ${row.cost}, Aggregate cost: ${row.agg_cost}`,
       coordinates: {
-        lat: row.lat,
-        lon: row.lon,
+        lat: parseFloat(row.lat),
+        lon: parseFloat(row.lon),
       },
-      distance: row.distance,
+      distance: parseFloat(row.distance),
     }));
 
     client.release();

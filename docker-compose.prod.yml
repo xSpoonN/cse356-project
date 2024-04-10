@@ -5,6 +5,7 @@ networks:
 
 volumes:
   osm-data:
+  osm-tiles:
   nominatim-data:
   routing-data:
   mongo-data:
@@ -120,6 +121,7 @@ services:
     image: 127.0.0.1:5000/tile-server
     volumes:
       - osm-data:/data/database/
+      - osm-tiles:/data/tiles/
       - type: tmpfs
         target: /dev/shm
         tmpfs:

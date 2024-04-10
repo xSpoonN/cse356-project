@@ -53,7 +53,7 @@ router.get('/turn/:TL/:BR', async (req, res) => {
     lat: +BR.split('.png')[0].split(',')[0],
     long: +BR.split('.png')[0].split(',')[1],
   };
-  const zoom = 18;
+  const zoom = 20;
 
   const {
     x_tile: x_tile_tl,

@@ -52,32 +52,17 @@ router.post('/route', async (req, res) => {
       (SELECT target_id FROM destination),
       FALSE
     )
-  ),
-	route_with_geom AS (
-    SELECT
-      r.seq, r.node, r.edge, r.cost, r.agg_cost,
-      w.geom_way,
-      ST_Length(w.geom_way::geography) AS distance,
-      w.osm_name AS name,
-  DEGREES(ST_Angle(w.geom_way, LEAD(w.geom_way) OVER (ORDER BY r.seq))) AS angle
-    FROM route r
-    JOIN us_northeast_2po_4pgr w ON r.edge = w.id
-  ),
-	route_with_turns AS (
-	SELECT *,
-    CASE
-      WHEN angle < 0 THEN 'Undefined'
-      WHEN ABS(angle - LAG(angle) OVER (ORDER BY seq)) < ABS(angle - LEAD(angle) OVER (ORDER BY seq)) THEN 'Left'
-      ELSE 'Right'
-    END AS turn_direction,
-		ST_Intersects(geom_way, LEAD(geom_way) OVER (ORDER BY seq)) as is_intersect,
-		ST_X(ST_CollectionExtract(ST_Intersection(geom_way, LEAD(geom_way) OVER (ORDER BY seq)), 1)) as lon,
-		ST_Y(ST_CollectionExtract(ST_Intersection(geom_way, LEAD(geom_way) OVER (ORDER BY seq)), 1)) as lat
-	FROM route_with_geom
-	)
-	SELECT * FROM route_with_turns
-	WHERE (angle >= 45 AND angle <= 135)
-	  OR (angle >= 225 AND angle <= 315);
+  )
+  SELECT
+    r.seq, r.node, r.edge, r.cost, r.agg_cost, 
+    ST_Length(w.geom_way::geography) AS distance,
+    ST_AsGeoJSON(w.geom_way) AS geomjson,
+    ST_X(ST_StartPoint(w.geom_way)) AS start_lon,
+    ST_Y(ST_StartPoint(w.geom_way)) AS start_lat,
+	  ST_X(ST_EndPoint(w.geom_way)) AS end_lon,
+    ST_Y(ST_EndPoint(w.geom_way)) AS end_lat
+  FROM route r
+  JOIN us_northeast_2po_4pgr w ON r.edge = w.id;
   `;
   try {
     console.log('Executing query');

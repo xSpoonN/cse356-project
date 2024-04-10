@@ -44,7 +44,7 @@ router.post('/convert', async (req, res) => {
 router.get('/turn/:TL/:BR', async (req, res) => {
   console.log('Received /turn request');
   if (!req.session.username) {
-    console.warn('Unauthorized reuqest');
+    console.warn('Unauthorized request');
     return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
   }
   const { TL, BR } = req.params;
@@ -55,16 +55,18 @@ router.get('/turn/:TL/:BR', async (req, res) => {
   };
   const zoom = 18;
 
-  const { x_tile: x_tile_tl, y_tile: y_tile_tl } = convertToTile(
-    tl.lat,
-    tl.long,
-    zoom
-  );
-  const { x_tile: x_tile_br, y_tile: y_tile_br } = convertToTile(
-    br.lat,
-    br.long,
-    zoom
-  );
+  const {
+    x_tile: x_tile_tl,
+    y_tile: y_tile_tl,
+    x_frac: x_frac_tl,
+    y_frac: y_frac_tl,
+  } = convertToTile(tl.lat, tl.long, zoom);
+  const {
+    x_tile: x_tile_br,
+    y_tile: y_tile_br,
+    x_frac: x_frac_br,
+    y_frac: y_frac_br,
+  } = convertToTile(br.lat, br.long, zoom);
   console.debug(
     `Tile Coords: { x_tile_tl: ${x_tile_tl}, y_tile_tl: ${y_tile_tl}, x_tile_br: ${x_tile_br}, y_tile_br: ${y_tile_br} }`
   );
@@ -109,9 +111,35 @@ router.get('/turn/:TL/:BR', async (req, res) => {
       blend: 'over',
     }))
   );
+
+  const boxLeft = Math.floor(x_frac_tl * 256);
+  const boxTop = Math.floor(y_frac_tl * 256);
+  const boxRight = Math.ceil(x_frac_br * 256);
+  const boxBottom = Math.ceil(y_frac_br * 256);
+  const boxWidth =
+    x_tile_tl === x_tile_br
+      ? Math.ceil((x_frac_br - x_frac_tl) * 256)
+      : Math.ceil(
+          (1 - x_frac_tl + x_frac_br + (x_tile_br - x_tile_tl - 1)) * 256
+        );
+  const boxHeight =
+    y_tile_tl === y_tile_br
+      ? Math.ceil((y_frac_br - y_frac_tl) * 256)
+      : Math.ceil(
+          (1 - y_frac_tl + y_frac_br + (y_tile_br - y_tile_tl - 1)) * 256
+        );
+  console.log(
+    `fracs: { x_frac_tl: ${x_frac_tl}, y_frac_tl: ${y_frac_tl}, x_frac_br: ${x_frac_br}, y_frac_br: ${y_frac_br} }`
+  );
+  console.log(
+    `box Offset: { left: ${boxLeft}, top: ${boxTop}, right: ${boxRight}, bottom: ${boxBottom}`
+  );
+  console.log(`box Dimensions: { width: ${boxWidth}, height: ${boxHeight} }`);
+
   mergedImage = await mergedImage.png().toBuffer();
   const resizedImage = await sharp(mergedImage)
     .flatten()
+    .extract({ left: boxLeft, top: boxTop, width: boxWidth, height: boxHeight })
     .resize(100, 100)
     .toBuffer();
 
@@ -120,17 +148,23 @@ router.get('/turn/:TL/:BR', async (req, res) => {
 
 const convertToTile = (lat, long, zoom) => {
   // Calculate tile indices - https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Implementations
-  const x_tile = Math.floor(((long + 180) / 360) * Math.pow(2, zoom));
-  const y_tile = Math.floor(
+  const x_full = ((long + 180) / 360) * Math.pow(2, zoom);
+  const y_full =
     ((1 -
       Math.log(
         Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)
       ) /
         Math.PI) /
       2) *
-      Math.pow(2, zoom)
-  );
-  return { x_tile, y_tile };
+    Math.pow(2, zoom);
+  const x_tile = Math.floor(x_full);
+  const y_tile = Math.floor(y_full);
+  // Calculate location of point within tile.
+  /* const x_frac = ((long + 180) / 360) * Math.pow(2, zoom) - x_tile;
+  const y_frac = ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180))) / Math.PI) / 2 * Math.pow(2, zoom) - y_tile; */
+  const x_frac = x_full % 1;
+  const y_frac = y_full % 1;
+  return { x_tile, y_tile, x_frac, y_frac };
 };
 
 const getTile = async options => {

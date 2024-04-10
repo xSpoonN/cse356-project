@@ -2,6 +2,8 @@
 - name: Setup VMs
   hosts: all
   become: yes
+  vars:
+    project_branch: test/query
   tasks:
     - name: Install required packages
       apt:
@@ -69,6 +71,12 @@
         accept_hostkey: yes
         key_file: '~/.ssh/github'
         force: yes
+
+    - name: Checkout to the branch
+      shell: git checkout {{ project_branch }}
+      args:
+        chdir: /root/project
+
     - name: Create a directory for logs
       file:
         path: '/root/project/logs'

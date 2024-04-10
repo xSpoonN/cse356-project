@@ -13,7 +13,6 @@ networks:
 
 volumes:
   osm-data:
-  nominatim-data:
   routing-data:
   mongo-data:
   mongo-config:
@@ -83,7 +82,6 @@ services:
       dockerfile: ../docker/backend.prod.Dockerfile
     depends_on:
       - tile-server
-      - nominatim
       - pgrouting
       - mongo
     restart: always
@@ -132,28 +130,6 @@ services:
       placement:
         constraints:
           - node.hostname == tile-server
-
-  nominatim:
-    container_name: nominatim
-    image: mediagis/nominatim:4.4
-    environment:
-      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
-      NOMINATIM_PASSWORD: mysecretpassword
-      POSTGRES_SHARED_BUFFERS: 2GB # 25% of total memory
-      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
-      POSTGRES_AUTOVACUUM_WORK_MEM: 2GB
-      POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
-    volumes:
-      - nominatim-data:/var/lib/postgresql/14/main
-      - type: tmpfs
-        target: /dev/shm
-        tmpfs:
-          size: 4294967296 # half of total memory
-    restart: always
-    deploy:
-      placement:
-        constraints:
-          - node.hostname == nominatim
 
   pgrouting:
     container_name: pgrouting

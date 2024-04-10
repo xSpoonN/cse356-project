@@ -27,7 +27,7 @@ services:
     logging:
       driver: 'fluentd'
       options:
-        tag: frontend
+        tag: nginx
         fluentd-address: fluentd:24224
         fluentd-async-connect: 'true'
 
@@ -86,7 +86,7 @@ services:
     logging:
       driver: 'fluentd'
       options:
-        tag: frontend
+        tag: backend
         fluentd-address: fluentd:24224
         fluentd-async-connect: 'true'
 

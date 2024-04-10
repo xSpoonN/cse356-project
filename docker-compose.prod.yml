@@ -14,7 +14,7 @@ volumes:
   import-data:
 
 services:
-  reverse_proxy:
+  nginx:
     container_name: nginx
     image: nginx:latest
     ports:

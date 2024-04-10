@@ -1,13 +1,6 @@
-x-logging-options: &logging
-  logging:
-    driver: 'fluentd'
-    options:
-      tag: '{{.Name}}'
-      fluentd-address: fluentd:24224
-      fluentd-async-connect: 'true'
-
 volumes:
   osm-data:
+  nominatim-data:
   routing-data:
   mongo-data:
   mongo-config:
@@ -47,6 +40,7 @@ services:
     depends_on:
       - fluentd
       - backend
+      - nominatim
     restart: always
     deploy:
       placement:
@@ -132,6 +126,20 @@ services:
       placement:
         constraints:
           - node.hostname == tile-server
+
+  nominatim:
+    container_name: nominatim
+    image: mediagis/nominatim:4.4
+    environment:
+      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
+      NOMINATIM_PASSWORD: mysecretpassword
+      POSTGRES_SHARED_BUFFERS: 2GB # 25% of total memory
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
+      POSTGRES_AUTOVACUUM_WORK_MEM: 2GB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+    shm_size: 2gb
 
   pgrouting:
     container_name: pgrouting

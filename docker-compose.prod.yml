@@ -36,7 +36,6 @@ services:
     depends_on:
       - frontend
       - backend
-      - portainer
       - glances
     deploy:
       placement:

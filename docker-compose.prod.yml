@@ -159,8 +159,7 @@ services:
       - import-data:/data
     restart: 'no'
     depends_on:
-      pgrouting:
-        condition: service_healthy
+      - pgrouting
     deploy:
       placement:
         constraints:

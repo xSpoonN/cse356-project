@@ -8,7 +8,6 @@ x-logging-options: &logging
 
 volumes:
   osm-data:
-  nominatim-data:
   routing-data:
   mongo-data:
   mongo-config:
@@ -63,7 +62,6 @@ services:
       - ./backend/routes:/app/routes
     depends_on:
       - tile-server
-      - nominatim
       - pgrouting
       - mongo
     restart: always
@@ -95,22 +93,6 @@ services:
       DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
     shm_size: 256mb
     restart: always
-
-  nominatim:
-    container_name: nominatim
-    image: mediagis/nominatim:4.4
-    ports:
-      - '9090:8080'
-    environment:
-      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
-      NOMINATIM_PASSWORD: mysecretpassword
-      POSTGRES_SHARED_BUFFERS: 2GB # 25% of total memory
-      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
-      POSTGRES_AUTOVACUUM_WORK_MEM: 2GB
-      POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
-    volumes:
-      - nominatim-data:/var/lib/postgresql/14/main
-    shm_size: 2gb
 
   pgrouting:
     container_name: pgrouting

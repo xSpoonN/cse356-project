@@ -56,11 +56,8 @@ router.post('/route', async (req, res) => {
   SELECT
     r.seq, r.node, r.edge, r.cost, r.agg_cost, 
     ST_Length(w.geom_way::geography) AS distance,
-    ST_AsGeoJSON(w.geom_way) AS geomjson,
-    ST_X(ST_StartPoint(w.geom_way)) AS start_lon,
-    ST_Y(ST_StartPoint(w.geom_way)) AS start_lat,
-	  ST_X(ST_EndPoint(w.geom_way)) AS end_lon,
-    ST_Y(ST_EndPoint(w.geom_way)) AS end_lat
+    ST_X(ST_StartPoint(w.geom_way)) AS lon,
+    ST_Y(ST_StartPoint(w.geom_way)) AS lat
   FROM route r
   JOIN us_northeast_2po_4pgr w ON r.edge = w.id;
   `;
@@ -75,6 +72,7 @@ router.post('/route', async (req, res) => {
       },
       distance: parseFloat(row.distance),
     }));
+    console.debug('Query Result: ', route);
 
     client.release();
     return res.status(200).json(route);

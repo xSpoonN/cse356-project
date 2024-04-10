@@ -132,11 +132,11 @@ export default function Sidebar({ map, bbox }) {
       if (transformedResults.length <= 200) {
         transformedResults.forEach(result => {
           L.marker([result.coordinates.lat, result.coordinates.lon])
-            .addTo(routeLayerRef.current)
+            .addTo(markerLayerRef.current)
             .bindPopup(result.description);
         });
       }
-      const stepNumbers = transformedResults.map(entry => {
+      /* const stepNumbers = transformedResults.map(entry => {
         return { ...entry, order: entry.description.split(' ')[1] };
       });
       const sortedSteps = stepNumbers.sort((a, b) => a.order - b.order);
@@ -146,11 +146,14 @@ export default function Sidebar({ map, bbox }) {
           return [result.coordinates.lat, result.coordinates.lon];
         }),
         [dest.lat, dest.lon],
-      ];
-      console.log(routeLineCoords);
+      ]; */
+      results.forEach(result => {
+        L.geoJSON(result.geoJson).addTo(routeLayerRef.current);
+      });
+      /* console.log(routeLineCoords);
       L.polyline(routeLineCoords, { color: 'blue' }).addTo(
-        markerLayerRef.current
-      );
+        routeLayerRef.current
+      ); */
     }
 
     L.marker([source.lat, source.lon], {

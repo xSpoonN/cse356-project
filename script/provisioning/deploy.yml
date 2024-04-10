@@ -70,7 +70,7 @@
   hosts: swarm_manager
   become: yes
   vars:
-    project_branch: test/query
+    project_branch: main
   tasks:
     - name: Install git
       apt:

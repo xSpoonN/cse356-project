@@ -83,7 +83,7 @@ router.post('/adduser', async (req, res) => {
       console.log('Sending verification email');
       const transporter = nodemailer.createTransport({
         port: 25,
-        host: '127.0.0.1',
+        host: 'host.docker.internal',
         secure: false,
         tls: {
           rejectUnauthorized: false,

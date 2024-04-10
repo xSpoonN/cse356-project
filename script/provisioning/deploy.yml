@@ -81,6 +81,10 @@
       file:
         path: '/root/project/logs'
         state: directory
+    - name: Create a directory for vhost.d
+      file:
+        path: '/root/project/vhost.d'
+        state: directory
 
 - name: Setup Docker Swarm Manager
   hosts: swarm_manager

@@ -31,7 +31,12 @@ services:
       placement:
         constraints:
           - node.role == manager
-    <<: *logging
+    logging:
+      driver: 'fluentd'
+      options:
+        tag: frontend
+        fluentd-address: fluentd:24224
+        fluentd-async-connect: 'true'
 
   frontend:
     container_name: frontend
@@ -84,7 +89,12 @@ services:
       placement:
         constraints:
           - node.role == manager
-    <<: *logging
+    logging:
+      driver: 'fluentd'
+      options:
+        tag: frontend
+        fluentd-address: fluentd:24224
+        fluentd-async-connect: 'true'
 
   mongo:
     container_name: mongo

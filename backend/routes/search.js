@@ -61,15 +61,15 @@ router.post('/search', async (req, res) => {
       FROM 
         planet_osm_point 
       WHERE 
-        LOWER(name) LIKE LOWER('%$1%') AND ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857) && way
+        LOWER(name) LIKE LOWER(CONCAT('%', $1::text, '%')) AND ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857) && way
       UNION
       SELECT
         name, 
-        ST_X(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326)), 3857))), 4326)) AS lon,
+        ST_X(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857))), 4326)) AS lon,
         ST_Y(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857))), 4326)) AS lat
       FROM 
         planet_osm_line 
-      WHERE LOWER(name) LIKE LOWER('%$1%') AND ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857) && way
+      WHERE LOWER(name) LIKE LOWER(CONCAT('%', $1::text, '%')) AND ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857) && way
       UNION
       SELECT 
         name, 
@@ -77,7 +77,7 @@ router.post('/search', async (req, res) => {
         ST_Y(ST_Transform(ST_Centroid(ST_Intersection(way, ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857))), 4326)) AS lat
       FROM
         planet_osm_polygon 
-      WHERE LOWER(name) LIKE LOWER('%$1%') AND ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857) && way
+      WHERE LOWER(name) LIKE LOWER(CONCAT('%', $1::text, '%')) AND ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, 4326), 3857) && way
       LIMIT 30;`;
   } else {
     sql = `

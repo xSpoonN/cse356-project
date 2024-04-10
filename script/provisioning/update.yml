@@ -3,7 +3,7 @@
   hosts: swarm_manager
   become: yes
   vars:
-    target_branch: main
+    project_branch: test/query
 
   tasks:
     - name: Remove the currently running stack
@@ -12,17 +12,17 @@
 
     - name: Pull the new change from the remote repo
       git:
-        repo: "git@github.com:goodgoed/CSE356_project.git"
-        dest: "/root/project"
+        repo: 'git@github.com:goodgoed/CSE356_project.git'
+        dest: '/root/project'
         accept_hostkey: yes
-        key_file: "~/.ssh/github"
+        key_file: '~/.ssh/github'
         force: yes
-    
+
     - name: Switch to another branch
-      shell: git switch {{ target_branch }}
+      shell: git switch {{ project_branch }}
       args:
-        chdir: "/root/project"
-    
+        chdir: '/root/project'
+
     - name: Build images
       shell: docker compose -f /root/project/docker-compose.prod.yml build
 

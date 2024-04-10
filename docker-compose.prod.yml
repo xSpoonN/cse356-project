@@ -3,7 +3,7 @@ x-logging-options: &logging
     driver: 'fluentd'
     options:
       tag: '{{.Name}}'
-      fluentd-address: localhost:24224
+      fluentd-address: fluentd:24224
       fluentd-async-connect: 'true'
 
 networks:

@@ -13,6 +13,9 @@ networks:
   agent_network:
     driver: overlay
     attachable: true
+  outside:
+    external:
+      name: 'host'
 
 volumes:
   osm-data:
@@ -59,6 +62,8 @@ services:
         tag: frontend
         fluentd-async-connect: 'true'
     restart: always
+    networks:
+      - outside
     deploy:
       placement:
         constraints:

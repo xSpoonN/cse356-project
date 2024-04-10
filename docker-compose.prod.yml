@@ -55,12 +55,6 @@ services:
     depends_on:
       - fluentd
       - backend
-    logging:
-      driver: 'fluentd'
-      options:
-        fluentd-address: 127.0.0.1:24224
-        tag: frontend
-        fluentd-async-connect: 'true'
     restart: always
     networks:
       - outside
@@ -215,7 +209,7 @@ services:
     image: portainer/portainer-ce:2.19.4
     command: -H tcp://tasks.agent:9001 --tlsskipverify
     environment:
-      - VIRTUAL_HOST=mygroup.cse356.compas.cs.stonybrook.edu
+      - VIRTUAL_HOST=portainer.mygroup.cse356.compas.cs.stonybrook.edu
       - VIRTUAL_PORT=9000
     ports:
       - 8000:8000

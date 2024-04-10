@@ -55,7 +55,6 @@ router.post('/route', async (req, res) => {
   )
   SELECT
     r.seq, r.node, r.edge, r.cost, r.agg_cost, 
-    ST_Length(w.geom_way::geography) AS distance,
     ST_X(ST_StartPoint(w.geom_way)) AS lon,
     ST_Y(ST_StartPoint(w.geom_way)) AS lat
   FROM route r

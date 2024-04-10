@@ -145,7 +145,15 @@ services:
       POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main
-    shm_size: 2gb
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 4294967296 # half of total memory
+    restart: always
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == nominatim
 
   pgrouting:
     container_name: pgrouting

@@ -69,7 +69,6 @@ router.post('/route', async (req, res) => {
         lat: parseFloat(row.lat),
         lon: parseFloat(row.lon),
       },
-      distance: parseFloat(row.distance),
     }));
     console.debug('Query Result: ', route);
 

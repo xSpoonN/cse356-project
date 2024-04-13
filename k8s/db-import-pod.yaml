@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    cse356-project-default: "true"
+    app: db-import
+  name: db-import
+spec:
+  containers:
+    - image: db-import
+      name: db-import
+      volumeMounts:
+        - mountPath: /data
+          name: import-data
+  restartPolicy: Never
+  volumes:
+    - name: import-data
+      persistentVolumeClaim:
+        claimName: import-data

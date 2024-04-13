@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pgrouting
+  name: pgrouting
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgrouting
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        cse356-project-default: "true"
+        app: pgrouting
+    spec:
+      containers:
+        - env:
+            - name: POSTGRES_DB
+              value: routing
+            - name: POSTGRES_PASSWORD
+              value: mysecretpassword
+          image: pgrouting/pgrouting:latest
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready -U postgres
+            failureThreshold: 10
+            periodSeconds: 3
+            timeoutSeconds: 5
+          name: pgrouting
+          ports:
+            - containerPort: 5432
+              hostPort: 5433
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: routing-data
+      restartPolicy: Always
+      volumes:
+        - name: routing-data
+          persistentVolumeClaim:
+            claimName: routing-data

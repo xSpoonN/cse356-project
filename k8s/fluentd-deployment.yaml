@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: fluentd
+  name: fluentd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluentd
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        cse356-project-default: "true"
+        app: fluentd
+    spec:
+      containers:
+        - image: fluentd
+          name: fluentd
+          ports:
+            - containerPort: 24224
+              hostPort: 24224
+              protocol: TCP
+            - containerPort: 24224
+              hostPort: 24224
+              protocol: UDP
+          volumeMounts:
+            - mountPath: /fluentd/etc/fluent.conf
+              name: fluentd-claim0
+            - mountPath: /var/log/fluentd
+              name: fluentd-claim1
+      restartPolicy: Always
+      volumes:
+        - name: fluentd-claim0
+          persistentVolumeClaim:
+            claimName: fluentd-claim0
+        - name: fluentd-claim1
+          persistentVolumeClaim:
+            claimName: fluentd-claim1

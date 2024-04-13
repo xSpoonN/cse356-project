@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: backend
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        cse356-project-default: "true"
+        app: backend
+    spec:
+      containers:
+        - image: backend
+          name: backend
+          volumeMounts:
+            - mountPath: /app/server.js
+              name: backend-claim0
+            - mountPath: /app/routes
+              name: backend-claim1
+      restartPolicy: Always
+      volumes:
+        - name: backend-claim0
+          persistentVolumeClaim:
+            claimName: backend-claim0
+        - name: backend-claim1
+          persistentVolumeClaim:
+            claimName: backend-claim1

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: glances
+  name: glances
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: glances
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        cse356-project-default: "true"
+        app: glances
+    spec:
+      containers:
+        - env:
+            - name: GLANCES_OPT
+              value: -C /glances/conf/glances.conf -w
+            - name: TZ
+              value: America/New_York
+          image: nicolargo/glances:latest-full
+          name: glances
+          ports:
+            - containerPort: 61208
+              hostPort: 61208
+              protocol: TCP
+            - containerPort: 61209
+              hostPort: 61209
+              protocol: TCP
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /var/run/docker.sock
+              name: glances-claim0
+              readOnly: true
+      restartPolicy: Always
+      volumes:
+        - name: glances-claim0
+          persistentVolumeClaim:
+            claimName: glances-claim0
+            readOnly: true

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: portainer
+  name: portainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portainer
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        cse356-project-default: "true"
+        app: portainer
+    spec:
+      containers:
+        - image: portainer/portainer-ce:2.19.4
+          name: portainer
+          ports:
+            - containerPort: 9443
+              hostPort: 9443
+              protocol: TCP
+            - containerPort: 8000
+              hostPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /data
+              name: portainer-data
+            - mountPath: /var/run/docker.sock
+              name: portainer-claim1
+      restartPolicy: Always
+      volumes:
+        - name: portainer-data
+          persistentVolumeClaim:
+            claimName: portainer-data
+        - name: portainer-claim1
+          persistentVolumeClaim:
+            claimName: portainer-claim1

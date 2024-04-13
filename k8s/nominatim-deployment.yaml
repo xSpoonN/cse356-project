@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nominatim
+  name: nominatim
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nominatim
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        cse356-project-default: "true"
+        app: nominatim
+    spec:
+      containers:
+        - env:
+            - name: NOMINATIM_PASSWORD
+              value: mysecretpassword
+            - name: PBF_URL
+              value: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
+            - name: POSTGRES_AUTOVACUUM_WORK_MEM
+              value: 2GB
+            - name: POSTGRES_EFFECTIVE_CACHE_SIZE
+              value: 4GB
+            - name: POSTGRES_MAINTENANCE_WORK_MEM
+              value: 64MB
+            - name: POSTGRES_SHARED_BUFFERS
+              value: 2GB
+          image: mediagis/nominatim:4.4
+          name: nominatim
+          ports:
+            - containerPort: 8080
+              hostPort: 9090
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/14/main
+              name: nominatim-data
+      restartPolicy: Always
+      volumes:
+        - name: nominatim-data
+          persistentVolumeClaim:
+            claimName: nominatim-data

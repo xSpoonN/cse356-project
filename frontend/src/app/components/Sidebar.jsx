@@ -6,9 +6,11 @@ import 'leaflet/dist/leaflet.css';
 
 export default function Sidebar({ map, bbox }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [addrSearchTerm, setAddrSearchTerm] = useState({ lat: 0, lon: 0 });
   const [onlyInBox, setOnlyInBox] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [routeResults, setRouteResults] = useState([]); // [ {description: '', coordinates: {lat: 0, lon: 0}} ]
+  const [addrSearchResult, setAddrSearchResult] = useState({});
   const [source, setSource] = useState({ name: '', lat: 0, lon: 0 });
   const [dest, setDest] = useState({ name: '', lat: 0, lon: 0 });
   const [mode, setMode] = useState('search'); // search or route
@@ -19,7 +21,7 @@ export default function Sidebar({ map, bbox }) {
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [register, setRegister] = useState(false); // Register or login
-  const [loggedIn, setLoggedIn] = useState(false); // @todo: Temporary, need to check cookies.
+  const [loggedIn, setLoggedIn] = useState(false);
   const markerLayerRef = useRef(null);
   const routeLayerRef = useRef(null);
 
@@ -136,24 +138,9 @@ export default function Sidebar({ map, bbox }) {
             .bindPopup(result.description);
         });
       }
-      /* const stepNumbers = transformedResults.map(entry => {
-        return { ...entry, order: entry.description.split(' ')[1] };
-      });
-      const sortedSteps = stepNumbers.sort((a, b) => a.order - b.order);
-      const routeLineCoords = [
-        [source.lat, source.lon],
-        ...sortedSteps.map(result => {
-          return [result.coordinates.lat, result.coordinates.lon];
-        }),
-        [dest.lat, dest.lon],
-      ]; */
       results.forEach(result => {
         L.geoJSON(result.geoJson).addTo(routeLayerRef.current);
       });
-      /* console.log(routeLineCoords);
-      L.polyline(routeLineCoords, { color: 'blue' }).addTo(
-        routeLayerRef.current
-      ); */
     }
 
     L.marker([source.lat, source.lon], {
@@ -199,6 +186,7 @@ export default function Sidebar({ map, bbox }) {
   }
 
   const search = async () => {
+    setLoading(true);
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/search`,
       {
@@ -211,7 +199,29 @@ export default function Sidebar({ map, bbox }) {
     );
     const data = await res.json();
     console.log('data: ', data);
+    setLoading(false);
     setSearchResults(Object.values(data));
+  };
+
+  const addrSearch = async () => {
+    setLoading(true);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/address`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lat: addrSearchTerm.lat,
+          lon: addrSearchTerm.lon,
+        }),
+      }
+    );
+    const data = await res.json();
+    console.log('data: ', data);
+    setLoading(false);
+    setAddrSearchResult(data);
   };
 
   const route = async () => {
@@ -390,7 +400,7 @@ export default function Sidebar({ map, bbox }) {
         )}
       </div>
       {/* Search Results */}
-      <div className="max-h-144 overflow-y-auto">
+      <div className="max-h-64 overflow-y-auto">
         {searchTerm &&
           (searchResults.length
             ? searchResults.map((result, index) => (
@@ -446,6 +456,64 @@ export default function Sidebar({ map, bbox }) {
                 </div>
               ))
             : 'No results')}
+      </div>
+      <br />
+      <br />
+      {/* Address Search */}
+      <div className="relative">
+        <input
+          type="text"
+          value={addrSearchTerm.lat}
+          placeholder="Latitude"
+          className="w-half mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={e =>
+            setAddrSearchTerm(prev => ({ ...prev, lat: e.target.value }))
+          }
+          onKeyDown={e => {
+            /* if (e.key === 'Enter') addrSearch(); */
+          }}
+        />
+        <input
+          type="text"
+          value={addrSearchTerm.lon}
+          placeholder="Latitude"
+          className="w-half mt-2 ml-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={e =>
+            setAddrSearchTerm(prev => ({ ...prev, lon: e.target.value }))
+          }
+          onKeyDown={e => {
+            if (e.key === 'Enter') addrSearch();
+          }}
+        />
+        <button
+          className="my-4 w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+          onClick={addrSearch}
+        >
+          Search Address
+        </button>
+      </div>
+      {/* Address Results */}
+      <div className="max-h-32 overflow-y-auto">
+        {addrSearchTerm &&
+          (Object.keys(addrSearchResult).length ? (
+            <div
+              className="flex items-center mr-auto p-2 bg-gray-100 rounded-md mb-2 cursor-pointer hover:bg-gray-200 gap-2"
+              onClick={() => {
+                map.flyTo([addrSearchTerm.lat, addrSearchTerm.lon], 15, {
+                  duration: calcFlyDuration(
+                    addrSearchTerm.lat,
+                    addrSearchTerm.lon
+                  ),
+                  easeLinearity: 0.5,
+                  animate: true,
+                });
+              }}
+            >
+              {`${addrSearchResult.number}, ${addrSearchResult.street}, ${addrSearchResult.city}, ${addrSearchResult.state}, ${addrSearchResult.country}`}
+            </div>
+          ) : (
+            'No results'
+          ))}
       </div>
       <br />
       <br />

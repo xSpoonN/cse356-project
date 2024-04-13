@@ -100,4 +100,29 @@ router.post('/search', async (req, res) => {
   }
 });
 
+router.post('/address', async (req, res) => {
+  console.log('Received /address request');
+  console.log(req.body);
+  const { lat, lon } = req.body;
+
+  try {
+    const query = `http://${process.env.BUILD_ENVIRONMENT === 'docker' ? 'nominatim:8080' : 'localhost:9090'}/reverse?lat=${lat}&lon=${lon}&format=jsonv2`;
+    console.log('Sending query to address service');
+    const query_res = JSON.parse(await (await fetch(query)).text());
+    //const query_res = await (temp).json();
+    console.debug(`Query result: `, query_res.address);
+
+    return res.status(200).json({
+      number: query_res.address.house_number,
+      street: query_res.address.road,
+      city: query_res.address.town,
+      state: query_res.address.state,
+      country: query_res.address.country,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
 module.exports = router;

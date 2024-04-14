@@ -32,11 +32,16 @@ spec:
               name: mongo-data
             - mountPath: /data/configdb
               name: mongo-config
+          resources:
+            limits:
+              cpu: 50m
+              memory: 200Mi
+            requests:
+              cpu: 10m
+              memory: 75Mi
       restartPolicy: Always
       volumes:
-        - name: mongo-data
-          persistentVolumeClaim:
-            claimName: mongo-data
-        - name: mongo-config
-          persistentVolumeClaim:
-            claimName: mongo-config
+        - emptyDir: {}
+          name: mongo-data
+        - emptyDir: {}
+          name: mongo-config

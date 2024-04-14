@@ -18,18 +18,26 @@ spec:
         app: backend
     spec:
       containers:
-        - image: backend
+        - image: cse356_project-backend:latest
+          imagePullPolicy: IfNotPresent
           name: backend
           volumeMounts:
             - mountPath: /app/server.js
-              name: backend-claim0
+              name: backend-hostpath0
             - mountPath: /app/routes
-              name: backend-claim1
+              name: backend-hostpath1
+          resources:
+            limits:
+              cpu: 250m
+              memory: 200Mi
+            requests:
+              cpu: 10m
+              memory: 75Mi
       restartPolicy: Always
       volumes:
-        - name: backend-claim0
-          persistentVolumeClaim:
-            claimName: backend-claim0
-        - name: backend-claim1
-          persistentVolumeClaim:
-            claimName: backend-claim1
+        - hostPath:
+            path: ../backend/server.js
+          name: backend-hostpath0
+        - hostPath:
+            path: ../backend/routes
+          name: backend-hostpath1

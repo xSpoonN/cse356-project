@@ -18,7 +18,8 @@ spec:
         app: fluentd
     spec:
       containers:
-        - image: fluentd
+        - image: cse356_project-fluentd:latest
+          imagePullPolicy: IfNotPresent
           name: fluentd
           ports:
             - containerPort: 24224
@@ -29,14 +30,21 @@ spec:
               protocol: UDP
           volumeMounts:
             - mountPath: /fluentd/etc/fluent.conf
-              name: fluentd-claim0
+              name: fluentd-hostpath0
             - mountPath: /var/log/fluentd
-              name: fluentd-claim1
+              name: fluentd-hostpath1
+          resources:
+            limits:
+              cpu: 50m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 50Mi
       restartPolicy: Always
       volumes:
-        - name: fluentd-claim0
-          persistentVolumeClaim:
-            claimName: fluentd-claim0
-        - name: fluentd-claim1
-          persistentVolumeClaim:
-            claimName: fluentd-claim1
+        - hostPath:
+            path: ../docker/fluent.conf
+          name: fluentd-hostpath0
+        - hostPath:
+            path: ../logs
+          name: fluentd-hostpath1

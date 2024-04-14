@@ -18,13 +18,21 @@ spec:
         app: frontend
     spec:
       containers:
-        - image: frontend
+        - image: cse356_project-frontend:latest
+          imagePullPolicy: IfNotPresent
           name: frontend
           volumeMounts:
             - mountPath: /app/src
-              name: frontend-claim0
+              name: frontend-hostpath0
+          resources:
+            limits:
+              memory: "750Mi"
+              cpu: "750m"
+            requests:
+              memory: "200Mi"
+              cpu: "50m"
       restartPolicy: Always
       volumes:
-        - name: frontend-claim0
-          persistentVolumeClaim:
-            claimName: frontend-claim0
+        - hostPath:
+            path: ../frontend/src
+          name: frontend-hostpath0

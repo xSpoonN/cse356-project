@@ -7,13 +7,20 @@ metadata:
   name: db-import
 spec:
   containers:
-    - image: db-import
+    - image: cse356_project-db-import:latest
+      imagePullPolicy: IfNotPresent
       name: db-import
       volumeMounts:
         - mountPath: /data
           name: import-data
+      resources:
+        limits:
+          cpu: 1500m
+          memory: 2000Mi
+        requests:
+          cpu: 100m
+          memory: 500Mi
   restartPolicy: Never
   volumes:
-    - name: import-data
-      persistentVolumeClaim:
-        claimName: import-data
+    - emptyDir: {}
+      name: import-data

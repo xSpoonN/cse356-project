@@ -26,14 +26,21 @@ spec:
               protocol: TCP
           volumeMounts:
             - mountPath: /etc/nginx/nginx.conf
-              name: nginx-claim0
+              name: nginx-hostpath0
             - mountPath: /var/run/docker.sock
-              name: nginx-claim1
+              name: nginx-hostpath1
+          resources:
+            limits:
+              memory: "50Mi"
+              cpu: "250m"
+            requests:
+              memory: "10Mi"
+              cpu: "100m"
       restartPolicy: Always
       volumes:
-        - name: nginx-claim0
-          persistentVolumeClaim:
-            claimName: nginx-claim0
-        - name: nginx-claim1
-          persistentVolumeClaim:
-            claimName: nginx-claim1
+        - hostPath:
+            path: ../docker/nginx.conf
+          name: nginx-hostpath0
+        - hostPath:
+            path: /var/run/docker.sock
+          name: nginx-hostpath1

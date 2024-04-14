@@ -31,12 +31,18 @@ spec:
             - mountPath: /data
               name: portainer-data
             - mountPath: /var/run/docker.sock
-              name: portainer-claim1
+              name: portainer-hostpath1
+          resources:
+            limits:
+              cpu: 30m
+              memory: 50Mi
+            requests:
+              cpu: 5m
+              memory: 10Mi
       restartPolicy: Always
       volumes:
-        - name: portainer-data
-          persistentVolumeClaim:
-            claimName: portainer-data
-        - name: portainer-claim1
-          persistentVolumeClaim:
-            claimName: portainer-claim1
+        - emptyDir: {}
+          name: portainer-data
+        - hostPath:
+            path: /var/run/docker.sock
+          name: portainer-hostpath1

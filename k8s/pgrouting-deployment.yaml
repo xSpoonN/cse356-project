@@ -39,8 +39,15 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: routing-data
+          resources:
+            limits:
+              cpu: 1500m
+              memory: 2000Mi
+            requests:
+              cpu: 25m
+              memory: 150Mi
       restartPolicy: Always
       volumes:
-        - name: routing-data
-          persistentVolumeClaim:
-            claimName: routing-data
+        - emptyDir: {}
+          name: routing-data
+

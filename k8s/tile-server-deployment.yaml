@@ -21,7 +21,8 @@ spec:
         - env:
             - name: DOWNLOAD_PBF
               value: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
-          image: tile-server
+          image: cse356_project-tile-server:latest
+          imagePullPolicy: IfNotPresent
           name: tile-server
           ports:
             - containerPort: 80
@@ -33,8 +34,14 @@ spec:
           volumeMounts:
             - mountPath: /data/database
               name: osm-data
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 4000Mi
+            requests:
+              cpu: 10m
+              memory: 2000Mi
       restartPolicy: Always
       volumes:
-        - name: osm-data
-          persistentVolumeClaim:
-            claimName: osm-data
+        - emptyDir: {}
+          name: osm-data

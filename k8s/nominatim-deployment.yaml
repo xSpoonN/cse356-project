@@ -40,8 +40,14 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/postgresql/14/main
               name: nominatim-data
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 4000Mi
+            requests:
+              cpu: 10m
+              memory: 1500Mi
       restartPolicy: Always
       volumes:
-        - name: nominatim-data
-          persistentVolumeClaim:
-            claimName: nominatim-data
+        - emptyDir: {}
+          name: nominatim-data

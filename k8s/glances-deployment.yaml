@@ -36,11 +36,17 @@ spec:
             privileged: true
           volumeMounts:
             - mountPath: /var/run/docker.sock
-              name: glances-claim0
+              name: glances-hostpath0
               readOnly: true
+          resources:
+            limits:
+              cpu: 15m
+              memory: 50Mi
+            requests:
+              cpu: 10m
+              memory: 10Mi
       restartPolicy: Always
       volumes:
-        - name: glances-claim0
-          persistentVolumeClaim:
-            claimName: glances-claim0
-            readOnly: true
+        - hostPath:
+            path: /var/run/docker.sock
+          name: glances-hostpath0

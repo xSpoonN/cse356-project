@@ -27,6 +27,10 @@ class SearchQuery(BaseModel):
     onlyInBox: bool
     searchTerm: str
 
+class AddressQuery(BaseModel):
+    lat: float
+    lon: float
+
 @app.post("/api/search/")
 async def search(query: SearchQuery):
     def cosineDistanceBetweenPoints(lat1, lon1, lat2, lon2):
@@ -95,6 +99,28 @@ async def search(query: SearchQuery):
 
     except Exception as E:
         print(E)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post('/api/address')
+async def get_address(data: AddressQuery):
+    print('Received /api/address request')
+    coordinate = (float(data.lon), float(data.lat))
+
+    try:
+        response = await api.reverse(coordinate)
+        print(response)
+
+        address = {
+            'number': response.address.get('housenumber'),
+            'street': response.address.get('street'),
+            'city': response.address.get('city'),
+            'state': response.address.get('state'),
+            'country': response.country_code.upper(),
+        }
+        return address
+
+    except Exception as err:
+        print(err)
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/")

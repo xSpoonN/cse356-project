@@ -461,30 +461,32 @@ export default function Sidebar({ map, bbox }) {
       <br />
       {/* Address Search */}
       <div className="relative">
-        <input
-          type="text"
-          value={addrSearchTerm.lat}
-          placeholder="Latitude"
-          className="w-half mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onChange={e =>
-            setAddrSearchTerm(prev => ({ ...prev, lat: e.target.value }))
-          }
-          onKeyDown={e => {
-            /* if (e.key === 'Enter') addrSearch(); */
-          }}
-        />
-        <input
-          type="text"
-          value={addrSearchTerm.lon}
-          placeholder="Latitude"
-          className="w-half mt-2 ml-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onChange={e =>
-            setAddrSearchTerm(prev => ({ ...prev, lon: e.target.value }))
-          }
-          onKeyDown={e => {
-            if (e.key === 'Enter') addrSearch();
-          }}
-        />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={addrSearchTerm.lat}
+            placeholder="Latitude"
+            className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={e =>
+              setAddrSearchTerm(prev => ({ ...prev, lat: e.target.value }))
+            }
+            onKeyDown={e => {
+              /* if (e.key === 'Enter') addrSearch(); */
+            }}
+          />
+          <input
+            type="text"
+            value={addrSearchTerm.lon}
+            placeholder="Latitude"
+            className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={e =>
+              setAddrSearchTerm(prev => ({ ...prev, lon: e.target.value }))
+            }
+            onKeyDown={e => {
+              if (e.key === 'Enter') addrSearch();
+            }}
+          />
+        </div>
         <button
           className="my-4 w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
           onClick={addrSearch}

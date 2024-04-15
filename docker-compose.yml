@@ -102,6 +102,11 @@ services:
       - '5432:5432'
     restart: always
 
+  tile-cache:
+    container_name: tile-cache
+    image: memcached:latest
+    command: ['-m', '512m']
+
   portainer:
     container_name: portainer
     image: portainer/portainer-ce:2.19.4

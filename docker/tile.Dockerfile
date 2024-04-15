@@ -37,7 +37,7 @@ RUN ln -sf /dev/stdout /var/log/apache2/access.log \
 # Setup renderd
 RUN echo '[default] \n\
 URI=/tiles/ \n\
-TILEDIR=/var/cache/renderd/tiles \n\
+TILEDIR=memcached://tile-cache:11211 \n\
 XML=/openstreetmap-carto/mapnik.xml \n\
 TILESIZE=256 \n\
 MAXZOOM=20' >> /etc/renderd.conf \

@@ -8,11 +8,8 @@ x-logging-options: &logging
 
 volumes:
   osm-data:
-  nominatim-data:
-  routing-data:
   mongo-data:
   mongo-config:
-  import-data:
   portainer_data:
 
 services:
@@ -23,10 +20,11 @@ services:
       - '80:80'
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - frontend
       - backend
+      - tile-server
+      - search
     <<: *logging
 
   frontend:
@@ -63,8 +61,7 @@ services:
       - ./backend/routes:/app/routes
     depends_on:
       - tile-server
-      - nominatim
-      - pgrouting
+      - db
       - mongo
     restart: always
     <<: *logging
@@ -81,80 +78,37 @@ services:
       MONGO_INITDB_DATABASE: 'user'
     restart: always
 
+  search:
+    container_name: search_microservice
+    build:
+      context: ./search/
+      dockerfile: ../docker/search.Dockerfile
+    ports:
+      - '3003:80'
+    restart: always
+
   tile-server:
     container_name: tile-server
     build:
       context: ./docker/
-      dockerfile: ./tile-server.Dockerfile
-    volumes:
-      - osm-data:/data/database/
+      dockerfile: ./tile.Dockerfile
     ports:
       - '8080:80'
-      - '5432:5432'
-    environment:
-      DOWNLOAD_PBF: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
     shm_size: 256mb
+    depends_on:
+      - db
     restart: always
 
-  nominatim:
-    container_name: nominatim
-    image: mediagis/nominatim:4.4
-    ports:
-      - '9090:8080'
-    environment:
-      PBF_URL: https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf
-      NOMINATIM_PASSWORD: mysecretpassword
-      POSTGRES_SHARED_BUFFERS: 2GB # 25% of total memory
-      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
-      POSTGRES_AUTOVACUUM_WORK_MEM: 2GB
-      POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
-    volumes:
-      - nominatim-data:/var/lib/postgresql/14/main
-    shm_size: 2gb
-
-  pgrouting:
-    container_name: pgrouting
-    image: pgrouting/pgrouting:latest
-    ports:
-      - '5433:5432'
-    volumes:
-      - routing-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: routing
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 3s
-      timeout: 5s
-      retries: 10
-    restart: always
-
-  db-import:
+  db:
+    container_name: db
     build:
       context: ./docker/
-      dockerfile: ./db-import.Dockerfile
-    container_name: db-import
+      dockerfile: ./db.Dockerfile
     volumes:
-      - import-data:/data
-    restart: 'no'
-    depends_on:
-      pgrouting:
-        condition: service_healthy
-
-  glances:
-    container_name: glances
-    image: nicolargo/glances:latest-full
-    restart: always
-    pid: 'host'
-    privileged: true
+      - osm-data:/var/lib/postgresql/14/main
     ports:
-      - 61208:61208
-      - 61209:61209
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      TZ: America/New_York
-      GLANCES_OPT: -C /glances/conf/glances.conf -w
+      - '5432:5432'
+    restart: always
 
   portainer:
     container_name: portainer

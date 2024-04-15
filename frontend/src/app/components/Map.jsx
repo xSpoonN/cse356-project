@@ -29,9 +29,9 @@ export default function Map() {
       7
     );
     L.tileLayer(
-      `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/tiles/l{z}/{x}/{y}.png`,
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/tiles/{z}/{x}/{y}.png`,
       {
-        maxZoom: 25,
+        maxZoom: 20,
         minZoom: 4,
         id: 'base',
       }

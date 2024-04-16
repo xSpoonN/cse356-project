@@ -1,11 +1,84 @@
-FROM ubuntu:22.04
+# Arguments
+ARG libmapnik_version=3.1
+ARG runner_additional_packages
+ARG ubuntu_version=22.04
 
-USER root
+# Builder
+FROM ubuntu:${ubuntu_version} as builder
 
-# Install dependencies
-RUN apt update && apt install -y --no-install-recommends \
-    screen locate libapache2-mod-tile renderd git tar unzip wget bzip2 apache2 lua5.1 mapnik-utils python3-mapnik python3-psycopg2 python3-yaml gdal-bin npm fonts-noto-cjk fonts-noto-hinted fonts-noto-unhinted fonts-unifont fonts-hanazono net-tools curl dos2unix
-RUN wget https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
+## Arguments
+ARG ubuntu_version
+
+## Install builder dependencies
+RUN --mount=id=ubuntu:${ubuntu_version}-/var/cache/apt,sharing=locked,target=/var/cache/apt,type=cache \
+    --mount=id=ubuntu:${ubuntu_version}-/var/lib/apt,sharing=locked,target=/var/lib/apt,type=cache \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get --yes update && \
+    apt-get --yes upgrade && \
+    apt-get --no-install-recommends --yes install \
+        ca-certificates \
+        apache2 \
+        apache2-dev \
+        cmake \
+        curl \
+        g++ \
+        gcc \
+        libcairo2-dev \
+        libcurl4-openssl-dev \
+        libglib2.0-dev \
+        libiniparser-dev \
+        libmapnik-dev \
+        libmemcached-dev \
+        librados-dev \
+        netbase \
+        git
+
+## Build, Test & Install `mod_tile`
+RUN rm -rf /tmp/mod_tile_src /tmp/mod_tile_build && \
+    mkdir -p /tmp/mod_tile_src /tmp/mod_tile_src && \
+    git clone --depth 1 https://github.com/openstreetmap/mod_tile.git /tmp/mod_tile_src
+RUN export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) && \
+    cmake -B . -S /tmp/mod_tile_src \
+        -DCMAKE_BUILD_TYPE:STRING=Release \
+        -DCMAKE_INSTALL_LOCALSTATEDIR=/var \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_RUNSTATEDIR=/run \
+        -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+        -DENABLE_TESTS:BOOL=ON && \
+    cmake --build .
+RUN export CTEST_PARALLEL_LEVEL=$(nproc) && \
+    export DESTDIR=/tmp/mod_tile && \
+    ctest --output-on-failure && \
+    (cmake --install . --strip || make DESTDIR=${DESTDIR} install/strip)
+
+# Runner
+FROM ubuntu:${ubuntu_version} as runner
+
+## Arguments
+ARG libmapnik_version=3.1
+ARG runner_additional_packages
+ARG ubuntu_version=22.04
+
+## Install runner dependencies
+RUN --mount=id=ubuntu:${ubuntu_version}-/var/cache/apt,sharing=locked,target=/var/cache/apt,type=cache \
+    --mount=id=ubuntu:${ubuntu_version}-/var/lib/apt,sharing=locked,target=/var/lib/apt,type=cache \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get --yes update && \
+    apt-get --yes upgrade && \
+    apt-get --no-install-recommends --yes install ${runner_additional_packages} \
+        ca-certificates \
+        apache2 \
+        libcairo2 \
+        libcurl4 \
+        libglib2.0-0 \
+        libiniparser1 \
+        libmapnik${libmapnik_version} \
+        libmemcached11 \
+        librados2 \
+        git \
+        wget \
+        npm \
+        fonts-noto-cjk fonts-noto-hinted fonts-noto-unhinted fonts-unifont fonts-hanazono fonts-dejavu 
 
 # Install stylesheet
 RUN git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 && cd openstreetmap-carto \
@@ -16,41 +89,28 @@ RUN git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/op
 && rm -rf .git
 RUN npm install -g carto
 
-# Get Noto Emoji Regular font, despite it being deprecated by Google
-RUN wget https://github.com/googlefonts/noto-emoji/blob/9a5261d871451f9b5183c93483cbd68ed916b1e9/fonts/NotoEmoji-Regular.ttf?raw=true --content-disposition -P /usr/share/fonts/
-RUN wget https://github.com/stamen/terrain-classic/blob/master/fonts/unifont-Medium.ttf?raw=true --content-disposition -P /usr/share/fonts/
-
-# Setup volumes
-RUN     mkdir -p /run/renderd \ 
-        mkdir -p /data/tiles  \
-    &&  ln -s /data/tiles  /var/cache/renderd/tiles \
-;
-
-# Setup Apache
-RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/apache2/conf-available/mod_tile.conf \
-&& echo "LoadModule headers_module /usr/lib/apache2/modules/mod_headers.so" >> /etc/apache2/conf-available/mod_headers.conf \
-&& a2enconf mod_tile && a2enconf mod_headers
-COPY apache.conf /etc/apache2/sites-available/000-default.conf
-RUN ln -sf /dev/stdout /var/log/apache2/access.log \
-&& ln -sf /dev/stderr /var/log/apache2/error.log
-
-# Setup renderd
-RUN echo '[default] \n\
-URI=/tiles/ \n\
-TILEDIR=memcached://tile-cache:11211 \n\
-XML=/openstreetmap-carto/mapnik.xml \n\
-TILESIZE=256 \n\
-MAXZOOM=20' >> /etc/renderd.conf \
-&& sed -i 's,/usr/share/fonts/truetype,/usr/share/fonts,g' /etc/renderd.conf
-
 # Setup remote db connection
 RUN sed -i '/osm2pgsql:/a \    host: "db"' /openstreetmap-carto/project.mml && \
 sed -i '/host: "db"/a \    user: "postgres"' /openstreetmap-carto/project.mml && \
 sed -i '/user: "postgres"/a \    password: "mysecretpassword"' /openstreetmap-carto/project.mml
 
-# Copy entrpoint script
-COPY ./tile-entrypoint.sh /entrypoint.sh
-RUN dos2unix /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Get Noto Emoji Regular font, despite it being deprecated by Google
+RUN wget https://github.com/googlefonts/noto-emoji/blob/9a5261d871451f9b5183c93483cbd68ed916b1e9/fonts/NotoEmoji-Regular.ttf?raw=true --content-disposition -P /usr/share/fonts/truetype
+RUN wget https://github.com/stamen/terrain-classic/blob/master/fonts/unifont-Medium.ttf?raw=true --content-disposition -P /usr/share/fonts/truetype
 
-ENTRYPOINT ["/entrypoint.sh"]
+# compile XML file
+RUN carto -q /openstreetmap-carto/project.mml > /openstreetmap-carto/mapnik.xml
+
+## Copy files from builder(s)
+COPY --from=builder /tmp/mod_tile /
+
+## Add configuration
+COPY apache.conf /etc/apache2/sites-available/000-default.conf
+COPY renderd.conf /etc/renderd.conf
+
+## Enable module & site
+RUN a2enmod tile && \
+    a2ensite 000-default
+
+CMD service apache2 restart; \
+    G_MESSAGES_DEBUG=info renderd -f;

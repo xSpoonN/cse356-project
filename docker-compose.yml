@@ -7,7 +7,7 @@ x-logging-options: &logging
       fluentd-async-connect: 'true'
 
 volumes:
-  osm-data:
+  osm-data1:
   mongo-data:
   mongo-config:
   portainer_data:
@@ -97,7 +97,8 @@ services:
       context: ./docker/
       dockerfile: ./db.Dockerfile
     volumes:
-      - osm-data:/var/lib/postgresql/14/main
+      - osm-data1:/var/lib/postgresql/14/main
+      - ./backup:/backup
     ports:
       - '5432:5432'
     restart: always
@@ -105,7 +106,7 @@ services:
   tile-cache:
     container_name: tile-cache
     image: memcached:latest
-    command: ['-m', '512m']
+    command: '-m 512 -I 10m -v'
 
   portainer:
     container_name: portainer

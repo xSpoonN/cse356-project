@@ -32,8 +32,6 @@ services:
     build:
       context: ./frontend/
       dockerfile: ../docker/frontend.dev.Dockerfile
-    volumes:
-      - ./frontend/src:/app/src
     depends_on:
       - fluentd
       - backend
@@ -44,9 +42,6 @@ services:
     build:
       context: ./docker/
       dockerfile: ./fluentd.Dockerfile
-    volumes:
-      - ./docker/fluent.conf:/fluentd/etc/fluent.conf
-      - ./logs/:/var/log/fluentd/
     ports:
       - '24224:24224'
       - '24224:24224/udp'
@@ -56,9 +51,6 @@ services:
     build:
       context: ./backend/
       dockerfile: ../docker/backend.dev.Dockerfile
-    volumes:
-      - ./backend/server.js:/app/server.js
-      - ./backend/routes:/app/routes
     depends_on:
       - tile-server
       - db

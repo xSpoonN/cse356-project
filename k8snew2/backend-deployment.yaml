@@ -22,7 +22,6 @@ spec:
         io.kompose.service: backend
     spec:
       containers:
-        - image: cse356_project-backend
-          imagePullPolicy: Never
+        - image: ktao87/cse356:cse356_project-backend
           name: backend
       restartPolicy: Always

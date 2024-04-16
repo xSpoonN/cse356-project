@@ -22,8 +22,7 @@ spec:
         io.kompose.service: search
     spec:
       containers:
-        - image: cse356_project-search
-          imagePullPolicy: Never
+        - image: ktao87/cse356:cse356_project-search
           name: search-microservice
           ports:
             - containerPort: 80

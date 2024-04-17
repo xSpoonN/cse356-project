@@ -2,30 +2,32 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: tile-server
-  name: tile-server
+    app: tile-cache
+  name: tile-cache
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tile-server
+      app: tile-cache
   template:
     metadata:
       labels:
         cse356-project-default: "true"
-        app: tile-server
+        app: tile-cache
     spec:
       containers:
-        - image: ktao87/cse356:cse356_project-tile-server
-          name: tile-server
-          ports:
-            - containerPort: 80
-              hostPort: 8080
-              protocol: TCP
+        - args:
+            - -m
+            - "512"
+            - -I
+            - 10m
+            - -v
+          image: memcached:latest
+          name: tile-cache
           resources:
             limits:
-              memory: "3000Mi"
-              cpu: "2000m"
+              memory: "500Mi"
+              cpu: "150m"
             requests:
               memory: "50Mi"
               cpu: "50m"

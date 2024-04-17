@@ -2,8 +2,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    io.kompose.service: portainer-data
-  name: portainer-data
+    app: mongo-config
+  name: mongo-config
 spec:
   accessModes:
     - ReadWriteOnce

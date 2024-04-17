@@ -9,8 +9,6 @@ spec:
   selector:
     matchLabels:
       app: fluentd
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
@@ -18,8 +16,7 @@ spec:
         app: fluentd
     spec:
       containers:
-        - image: cse356_project-fluentd:latest
-          imagePullPolicy: IfNotPresent
+        - image: ktao87/cse356:cse356_project-fluentd
           name: fluentd
           ports:
             - containerPort: 24224
@@ -29,22 +26,17 @@ spec:
               hostPort: 24224
               protocol: UDP
           volumeMounts:
-            - mountPath: /fluentd/etc/fluent.conf
-              name: fluentd-hostpath0
-            - mountPath: /var/log/fluentd
-              name: fluentd-hostpath1
+            - mountPath: /fluentd/etc/
+              name: fluentd-config
           resources:
             limits:
-              cpu: 50m
-              memory: 100Mi
+              memory: "200Mi"
+              cpu: "100m"
             requests:
-              cpu: 10m
-              memory: 50Mi
+              memory: "50Mi"
+              cpu: "50m"
       restartPolicy: Always
       volumes:
-        - hostPath:
-            path: ../docker/fluent.conf
-          name: fluentd-hostpath0
-        - hostPath:
-            path: ../logs
-          name: fluentd-hostpath1
+        - name: fluentd-config
+          configMap:
+            name: fluentd-config

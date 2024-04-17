@@ -9,8 +9,6 @@ spec:
   selector:
     matchLabels:
       app: backend
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
@@ -18,14 +16,8 @@ spec:
         app: backend
     spec:
       containers:
-        - image: cse356_project-backend:latest
-          imagePullPolicy: IfNotPresent
+        - image: ktao87/cse356:cse356_project-backend
           name: backend
-          volumeMounts:
-            - mountPath: /app/server.js
-              name: backend-hostpath0
-            - mountPath: /app/routes
-              name: backend-hostpath1
           resources:
             limits:
               cpu: 250m
@@ -34,10 +26,3 @@ spec:
               cpu: 10m
               memory: 75Mi
       restartPolicy: Always
-      volumes:
-        - hostPath:
-            path: ../backend/server.js
-          name: backend-hostpath0
-        - hostPath:
-            path: ../backend/routes
-          name: backend-hostpath1

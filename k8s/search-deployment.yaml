@@ -2,30 +2,30 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: tile-server
-  name: tile-server
+    app: search
+  name: search
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tile-server
+      app: search
   template:
     metadata:
       labels:
         cse356-project-default: "true"
-        app: tile-server
+        app: search
     spec:
       containers:
-        - image: ktao87/cse356:cse356_project-tile-server
-          name: tile-server
+        - image: ktao87/cse356:cse356_project-search
+          name: search-microservice
           ports:
             - containerPort: 80
-              hostPort: 8080
+              hostPort: 3003
               protocol: TCP
           resources:
             limits:
-              memory: "3000Mi"
-              cpu: "2000m"
+              memory: "200Mi"
+              cpu: "200m"
             requests:
               memory: "50Mi"
               cpu: "50m"

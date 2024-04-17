@@ -25,22 +25,17 @@ spec:
               hostPort: 80
               protocol: TCP
           volumeMounts:
-            - mountPath: /etc/nginx/nginx.conf
-              name: nginx-hostpath0
-            - mountPath: /var/run/docker.sock
-              name: nginx-hostpath1
+            - mountPath: /etc/nginx/
+              name: nginx-config
           resources:
             limits:
-              memory: "50Mi"
-              cpu: "250m"
+              cpu: 50m
+              memory: 100Mi
             requests:
-              memory: "10Mi"
-              cpu: "100m"
+              cpu: 20m
+              memory: 25Mi
       restartPolicy: Always
       volumes:
-        - hostPath:
-            path: ../docker/nginx.conf
-          name: nginx-hostpath0
-        - hostPath:
-            path: /var/run/docker.sock
-          name: nginx-hostpath1
+        - name: nginx-config
+          configMap:
+            name: nginx-config

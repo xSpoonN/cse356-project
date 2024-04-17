@@ -9,8 +9,6 @@ spec:
   selector:
     matchLabels:
       app: frontend
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
@@ -18,21 +16,13 @@ spec:
         app: frontend
     spec:
       containers:
-        - image: cse356_project-frontend:latest
-          imagePullPolicy: IfNotPresent
+        - image: ktao87/cse356:cse356_project-frontend
           name: frontend
-          volumeMounts:
-            - mountPath: /app/src
-              name: frontend-hostpath0
           resources:
             limits:
-              memory: "750Mi"
-              cpu: "750m"
+              memory: "500Mi"
+              cpu: "150m"
             requests:
-              memory: "200Mi"
+              memory: "50Mi"
               cpu: "50m"
       restartPolicy: Always
-      volumes:
-        - hostPath:
-            path: ../frontend/src
-          name: frontend-hostpath0

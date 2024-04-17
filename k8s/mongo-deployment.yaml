@@ -27,6 +27,10 @@ spec:
               value: root
           image: mongo:latest
           name: mongo
+          ports:
+            - containerPort: 27017
+              hostPort: 27017
+              protocol: TCP
           volumeMounts:
             - mountPath: /data/db
               name: mongo-data

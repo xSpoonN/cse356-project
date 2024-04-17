@@ -24,6 +24,10 @@ spec:
             - -v
           image: memcached:latest
           name: tile-cache
+          ports:
+            - containerPort: 11211
+              hostPort: 11211
+              protocol: TCP
           resources:
             limits:
               memory: "500Mi"

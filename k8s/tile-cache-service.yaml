@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tile-cache
+  name: tile-cache
+spec:
+  ports:
+    - name: "11211"
+      port: 11211
+      targetPort: 11211
+  selector:
+    app: tile-cache

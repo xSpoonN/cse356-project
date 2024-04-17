@@ -5,8 +5,9 @@ metadata:
     app: osm-data
   name: osm-data
 spec:
+  storageClassName: upcloud-block-storage-maxiops
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50000Mi
+      storage: 100Gi

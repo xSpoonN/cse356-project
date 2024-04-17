@@ -5,8 +5,9 @@ metadata:
     app: mongo-config
   name: mongo-config
 spec:
+  storageClassName: upcloud-block-storage-maxiops
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 100Mi
+      storage: 1Gi

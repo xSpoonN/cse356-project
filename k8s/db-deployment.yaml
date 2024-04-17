@@ -20,10 +20,6 @@ spec:
       containers:
         - image: ktao87/cse356:cse356_project-db
           name: db
-          ports:
-            - containerPort: 5432
-              hostPort: 5432
-              protocol: TCP
           volumeMounts:
             - mountPath: /var/lib/postgresql/14/main
               name: osm-data

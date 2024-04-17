@@ -17,6 +17,7 @@ spec:
     spec:
       containers:
         - image: ktao87/cse356:cse356_project-backend
+          imagePullPolicy: IfNotPresent
           name: backend
           resources:
             limits:

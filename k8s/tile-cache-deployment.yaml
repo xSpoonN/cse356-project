@@ -5,7 +5,7 @@ metadata:
     app: tile-cache
   name: tile-cache
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: tile-cache

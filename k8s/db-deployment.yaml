@@ -19,6 +19,7 @@ spec:
     spec:
       containers:
         - image: ktao87/cse356:cse356_project-db
+          imagePullPolicy: Always
           name: db
           volumeMounts:
             - mountPath: /var/lib/postgresql/14/main

@@ -17,6 +17,7 @@ spec:
     spec:
       containers:
         - image: ktao87/cse356:cse356_project-frontend
+          imagePullPolicy: Always
           name: frontend
           resources:
             limits:

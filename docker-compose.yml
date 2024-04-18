@@ -15,6 +15,7 @@ volumes:
 services:
   nginx:
     container_name: nginx
+    platform: linux/amd64
     image: nginx:latest
     ports:
       - '80:80'
@@ -29,6 +30,7 @@ services:
 
   frontend:
     container_name: frontend
+    platform: linux/amd64
     build:
       context: ./frontend/
       dockerfile: ../docker/frontend.dev.Dockerfile
@@ -37,17 +39,9 @@ services:
       - backend
     restart: always
 
-  fluentd:
-    container_name: fluentd
-    build:
-      context: ./docker/
-      dockerfile: ./fluentd.Dockerfile
-    ports:
-      - '24224:24224'
-      - '24224:24224/udp'
-
   backend:
     container_name: backend
+    platform: linux/amd64
     build:
       context: ./backend/
       dockerfile: ../docker/backend.dev.Dockerfile
@@ -58,29 +52,9 @@ services:
     restart: always
     <<: *logging
 
-  mongo:
-    container_name: mongo
-    image: mongo:latest
-    volumes:
-      - mongo-data:/data/db
-      - mongo-config:/data/configdb
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: 'root'
-      MONGO_INITDB_ROOT_PASSWORD: 'password'
-      MONGO_INITDB_DATABASE: 'user'
-    restart: always
-
-  search:
-    container_name: search_microservice
-    build:
-      context: ./search/
-      dockerfile: ../docker/search.Dockerfile
-    ports:
-      - '3003:80'
-    restart: always
-
   tile-server:
     container_name: tile-server
+    platform: linux/amd64
     build:
       context: ./docker/
       dockerfile: ./tile.Dockerfile
@@ -91,8 +65,32 @@ services:
       - db
     restart: always
 
+  search:
+    container_name: search_microservice
+    platform: linux/amd64
+    build:
+      context: ./search/
+      dockerfile: ../docker/search.Dockerfile
+    ports:
+      - '3003:80'
+    restart: always
+
+  mongo:
+    container_name: mongo
+    platform: linux/amd64
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'root'
+      MONGO_INITDB_ROOT_PASSWORD: 'password'
+      MONGO_INITDB_DATABASE: 'user'
+    restart: always
+
   db:
     container_name: db
+    platform: linux/amd64
     build:
       context: ./docker/
       dockerfile: ./db.Dockerfile
@@ -105,11 +103,23 @@ services:
 
   tile-cache:
     container_name: tile-cache
+    platform: linux/amd64
     image: memcached:latest
     command: '-m 512 -I 10m -v'
 
+  fluentd:
+    container_name: fluentd
+    platform: linux/amd64
+    build:
+      context: ./docker/
+      dockerfile: ./fluentd.Dockerfile
+    ports:
+      - '24224:24224'
+      - '24224:24224/udp'
+
   portainer:
     container_name: portainer
+    platform: linux/amd64
     image: portainer/portainer-ce:2.19.4
     ports:
       - '9443:9443'

@@ -4,8 +4,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 USER root
 
 # Install dependencies
-RUN apt update && \
-    apt install -y --no-install-recommends \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     # Build tools for nominatim and osm2po
     default-jre-headless build-essential g++ cmake libpq-dev zlib1g-dev libbz2-dev libproj-dev libexpat1-dev libboost-dev libboost-system-dev libboost-filesystem-dev liblua5.4-dev nlohmann-json3-dev \
     # postgres

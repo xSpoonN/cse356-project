@@ -5,8 +5,8 @@ async function connect_db() {
   const pool = new PG.Pool({
     user: 'postgres',
     password: 'mysecretpassword',
-    host: 'pgrouting',
-    database: 'routing',
+    host: 'db',
+    database: 'gis',
   });
   const client = await pool.connect();
 

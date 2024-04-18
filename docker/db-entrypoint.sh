@@ -6,7 +6,7 @@ initializeDatabase() {
     rm -rf /var/lib/postgresql/14/main/*
     if [ ! -f /var/lib/postgresql/14/main/PG_VERSION ]; then
         chown postgres /var/lib/postgresql/14/main
-        sudo -u postgres /usr/lib/postgresql/14/bin/initdb -D /var/lib/postgresql/14/main
+        sudo -u postgres /usr/lib/postgresql/14/bin/initdb -E 'UTF-8' --lc-collate='en_US.UTF-8' --lc-ctype='en_US.UTF-8' -D /var/lib/postgresql/14/main
     fi 
 
     sudo service postgresql start
@@ -19,7 +19,7 @@ initializeDatabase() {
     sudo -E -u postgres createuser -SDR www-data
 
     # Create database
-    sudo -E -u postgres psql -c "CREATE DATABASE gis ENCODING 'UTF8' TEMPLATE template0"
+    sudo -E -u postgres psql -c "CREATE DATABASE gis ENCODING 'UTF8'"
 
     # Create extensions
     sudo -E -u postgres psql -d gis -c "CREATE EXTENSION postgis"

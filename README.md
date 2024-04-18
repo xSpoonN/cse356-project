@@ -28,6 +28,8 @@ Run `docker compose up` in the root directory
 - ```kubectl exec --stdin --tty <podname> -- /bin/bash``` - Enters the shell in a running pod.
 - ```kubectl describe <pod|pvc|service|deployment|...> <name>``` - Prints out a ton of kubernetes level information about a resource.
 
+## Testing on local
+Run `docker container run --rm -p 5665:5665 --net=host -v ./script/testing:/scripts ghcr.io/grafana/xk6-dashboard:0.7.3-alpha.1 run -e NODE_ENV=development "/scripts/load_testing.js"` in root directory.
 
 ## Notes
 Make sure docker container has 4 CPUs and 8GB of RAM at least. Otherwise, installing would fail due to OOM.

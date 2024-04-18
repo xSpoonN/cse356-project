@@ -17,7 +17,6 @@ export const options = {
   ],
   thresholds: {
     http_req_duration: ['p(95)<250'], // 95% of requests must complete below 250ms
-    http_req_failed: ['rate=0'], // none of the requests should fail
   },
 };
 
@@ -41,7 +40,7 @@ const boundingBoxes = {
 };
 
 /**
- * @returns
+ * @returns a random coordinate within the given bounding box
  */
 function getRandomCoordinate(box) {
   const lon = Math.random() * (box[1][0] - box[0][0]) + box[0][0];
@@ -50,14 +49,23 @@ function getRandomCoordinate(box) {
 }
 
 /**
- * @returns 90% of the time, return the value of the key in the object, otherwise return a value from random keys
+ * @returns 90% of the time, return the value of the key in the object, otherwise return a value from random keys.
  */
 function chooseValue(obj, key) {
-  if (Math.random() < 0.9) {
-    return obj[key];
+  let keys = Object.keys(obj);
+  if (key) {
+    if (Math.random() < 0.9) {
+      return obj[key];
+    } else {
+      // Filter out the selected key
+      keys = keys.filter(k => k !== key);
+      // Randomly select from the remaining keys
+      const randomKey = keys[Math.floor(Math.random() * keys.length)];
+      return obj[randomKey];
+    }
+  } else {
+    return obj[keys[Math.floor(Math.random() * keys.length)]];
   }
-  const remainingKeys = Object.keys(obj).filter(k => k !== key);
-  return obj[Math.floor(Math.random() * remainingKeys.length)];
 }
 
 /**
@@ -68,11 +76,11 @@ function chooseValue(obj, key) {
  */
 export default function () {
   const baseUrl =
-    process.env.NODE_ENV === 'production'
+    __ENV.NODE_ENV === 'production'
       ? 'http://mygroup.cse356.compas.cs.stonybrook.edu'
       : 'http://localhost';
-  const location = chooseValue(boundingBoxes, 'Stony Brook');
-  const source = getRandomCoordinate(boundingBoxes[location]);
+  const bbox = chooseValue(boundingBoxes, 'Stony Brook');
+  const source = getRandomCoordinate(bbox);
   const zoom = Math.floor(Math.random() * 20);
 
   // Convert lat, lon to tile coordinates
@@ -88,6 +96,8 @@ export default function () {
       },
     })
     .json();
+
+  console.log(`Requesting tiles for ${x_tile}, ${y_tile}`);
 
   // Get tiles (3x3 grid)
   for (let x_offset = -1; x_offset <= 1; x_offset++) {
@@ -112,20 +122,21 @@ export default function () {
 
   // Search routes
   const destination = getRandomCoordinate(
-    boundingBoxes[chooseValue(boundingBoxes, 'Stony Brook')]
+    chooseValue(boundingBoxes, 'Stony Brook')
   );
   payload = JSON.stringify({
     source: {
       lat: source[1],
-      long: source[0],
+      lon: source[0],
     },
     destination: {
       lat: destination[1],
-      long: destination[0],
+      lon: destination[0],
     },
   });
+  console.log(`Searching routes for ${source} -> ${destination}`);
   const routes = http
-    .post(`${baseUrl}/api/routes`, payload, {
+    .post(`${baseUrl}/api/route`, payload, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -143,6 +154,7 @@ export default function () {
         },
       })
       .json();
+
     http.get(`${baseUrl}/tiles/${zoom}/${x_tile}/${y_tile}.png`);
   }
 

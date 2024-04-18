@@ -19,7 +19,7 @@ initializeDatabase() {
     sudo -E -u postgres createuser -SDR www-data
 
     # Create database
-    sudo -E -u postgres psql -c "CREATE DATABASE gis ENCODING 'UTF8'"
+    sudo -E -u postgres psql -c "CREATE DATABASE gis ENCODING 'UTF8' TEMPLATE template0"
 
     # Create extensions
     sudo -E -u postgres psql -d gis -c "CREATE EXTENSION postgis"

@@ -4,6 +4,8 @@ OSM_FILE=/var/lib/postgresql/14/main/new-york.osm.pbf
 
 initializeDatabase() {
     rm -rf /var/lib/postgresql/14/main/*
+    locale-gen en_US.UTF-8
+    dkpg-reconfigure locales
     if [ ! -f /var/lib/postgresql/14/main/PG_VERSION ]; then
         chown postgres /var/lib/postgresql/14/main
         sudo -u postgres /usr/lib/postgresql/14/bin/initdb -E 'UTF-8' --lc-collate='en_US.UTF-8' --lc-ctype='en_US.UTF-8' -D /var/lib/postgresql/14/main

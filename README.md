@@ -1,7 +1,7 @@
 ## Development
 Run `docker compose up` in the root directory
 
-### Kubernetes
+## Kubernetes
 0) Install kubectl
 1) Create Kubernetes cluster on UpCloud if one doesn't exist already.
 2) In the cluster, go to Kubeconfig > Manual > Download kubeconfig
@@ -17,6 +17,17 @@ Run `docker compose up` in the root directory
 >  - You do not have to rebuild for changes to containers using official images.
 
 5) ```kubectl apply -f ./k8s/```
+
+### Useful Commands
+- ```kubectl version``` - Check the connection to Kubernetes
+- ```export KUBECONFIG=path/to/config``` - Set up connection. this path is relative, and needs to be set again if you ```cd``` into another directory
+- ```kubectl apply -f path/to/configfiles``` - Updates the kubernetes deployment with new configuration files
+- ```kubectl get <pods|pvc|services|deployments|...>``` - Lists all resources of a type
+- ```kubectl logs <podname> [-f]``` - '-f' shows all logs from every run.
+- ```kubectl delete <pod|pvc|service|deployment|...> <name>``` - Deletes a resource. If you delete a pod with the deployment still active, it functions as a restart. If you delete a deployment, it will delete the pod along with it. If you delete a pod without first deleting the pvcs attached to it, it might hang.
+- ```kubectl exec --stdin --tty <podname> -- /bin/bash``` - Enters the shell in a running pod.
+- ```kubectl describe <pod|pvc|service|deployment|...> <name>``` - Prints out a ton of kubernetes level information about a resource.
+
 
 ## Notes
 Make sure docker container has 4 CPUs and 8GB of RAM at least. Otherwise, installing would fail due to OOM.

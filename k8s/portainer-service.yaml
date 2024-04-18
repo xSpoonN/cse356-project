@@ -14,3 +14,4 @@ spec:
       targetPort: 8000
   selector:
     app: portainer
+  type: LoadBalancer

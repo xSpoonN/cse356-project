@@ -3,7 +3,8 @@
 OSM_FILE=/var/lib/postgresql/14/main/new-york.osm.pbf
 
 initializeDatabase() {
-    if [ ! -f /var/lib/postgresql/14/data/PG_VERSION ]; then
+    rm -rf /var/lib/postgresql/14/main/*
+    if [ ! -f /var/lib/postgresql/14/main/PG_VERSION ]; then
         chown postgres /var/lib/postgresql/14/main
         sudo -u postgres /usr/lib/postgresql/14/bin/initdb -D /var/lib/postgresql/14/main
     fi 

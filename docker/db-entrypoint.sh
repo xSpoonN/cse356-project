@@ -34,6 +34,7 @@ restoreBackups() {
     # Restore GIS dump file
     gzip -dc /backup/gis.gz | sudo -u postgres pg_restore -d gis &
     # Restore Nominatim dump file
+    export NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;port=5432;dbname=nominatim;user=postgres;password=mysecretpassword"
     sudo -E -u postgres psql -c "CREATE DATABASE nominatim ENCODING 'UTF8'"
     gzip -dc /backup/nominatim.gz | sudo -u postgres pg_restore -d nominatim &
 

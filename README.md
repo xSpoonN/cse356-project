@@ -7,9 +7,6 @@ Run `docker compose up` in the root directory
 2) In the cluster, go to Kubeconfig > Manual > Download kubeconfig
 3) Set the env ```export KUBECONFIG=clustername_kubeconfig.yaml```
 4) Verify that it works using ```kubectl config view``` and ```kubectl version```
-> If nginx or fluentd configurations have changed (or no configMaps were set ever):
-> 1) Run ```create-configMaps.sh``` script to create configmaps for nginx and fluentd
->   - You do not have to recreate configmaps if the configuration has not changed.
 
 > If locally built images have changed (or have never been built):
 > 1) Build local images using ```docker compose build``` in root directory

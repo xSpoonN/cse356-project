@@ -18,15 +18,16 @@ spec:
         app: nginx
     spec:
       containers:
-        - image: nginx:latest
+        - image: ktao87/cse356:cse356_project-nginx
+          imagePullPolicy: Always
           name: nginx
           ports:
             - containerPort: 80
               hostPort: 80
               protocol: TCP
-          volumeMounts:
-            - mountPath: /etc/nginx/
-              name: nginx-config
+          # volumeMounts:
+          #   - mountPath: /etc/nginx/
+          #     name: nginx-config
           resources:
             limits:
               cpu: 50m
@@ -34,8 +35,10 @@ spec:
             requests:
               cpu: 20m
               memory: 25Mi
+      nodeSelector:
+        ngroup : two
       restartPolicy: Always
-      volumes:
-        - name: nginx-config
-          configMap:
-            name: nginx-config
+      # volumes:
+      #   - name: nginx-config
+      #     configMap:
+      #       name: nginx-config

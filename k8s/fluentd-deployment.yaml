@@ -26,9 +26,9 @@ spec:
             - containerPort: 24224
               hostPort: 24224
               protocol: UDP
-          volumeMounts:
-            - mountPath: /fluentd/etc/
-              name: fluentd-config
+          # volumeMounts:
+          #   - mountPath: /fluentd/etc/
+          #     name: fluentd-config
           resources:
             limits:
               memory: "200Mi"
@@ -36,8 +36,10 @@ spec:
             requests:
               memory: "50Mi"
               cpu: "50m"
+      nodeSelector:
+        ngroup : two
       restartPolicy: Always
-      volumes:
-        - name: fluentd-config
-          configMap:
-            name: fluentd-config
+      # volumes:
+      #   - name: fluentd-config
+      #     configMap:
+      #       name: fluentd-config

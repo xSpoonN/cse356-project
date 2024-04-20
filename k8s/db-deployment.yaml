@@ -33,6 +33,8 @@ spec:
             requests:
               cpu: 250m
               memory: 256Mi
+      nodeSelector:
+        ngroup : three
       restartPolicy: Always
       volumes:
         - name: osm-data

@@ -5,7 +5,7 @@ metadata:
     app: db-claim1
   name: db-claim1
 spec:
-  storageClassName: manual
+  storageClassName: upcloud-block-storage-maxiops
   accessModes:
     - ReadWriteOnce
   resources:

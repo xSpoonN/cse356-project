@@ -44,6 +44,8 @@ spec:
               cpu: 50m
               memory: 100Mi
       restartPolicy: Always
+      nodeSelector:
+        ngroup : one
       volumes:
         - name: mongo-data
           persistentVolumeClaim:

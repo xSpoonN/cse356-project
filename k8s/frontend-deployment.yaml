@@ -30,4 +30,6 @@ spec:
             - containerPort: 3000
               hostPort: 3000
               protocol: TCP
+      nodeSelector:
+        ngroup : two
       restartPolicy: Always

@@ -56,7 +56,7 @@
         state: latest
         update_cache: yes
     - name: Setup myhostname
-      shell: postconf -e 'myhostname = mygroup.cse356.compas.cs.stonybrook.edu'
+      shell: postconf -e 'myhostname = mygroop.cse356.compas.cs.stonybrook.edu'
     - name: Setup mydomain
       shell: postconf -e 'mydomain = cse356.compas.cs.stonybrook.edu'
     - name: Setup myorigin

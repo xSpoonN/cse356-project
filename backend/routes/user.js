@@ -91,9 +91,9 @@ router.post('/adduser', async (req, res) => {
           },
         });
 
-        const verificationLink = `http://mygroup.cse356.compas.cs.stonybrook.edu/api/verify?email=${encodeURIComponent(email)}&key=${verificationKey}`;
+        const verificationLink = `http://mygroop.cse356.compas.cs.stonybrook.edu/api/verify?email=${encodeURIComponent(email)}&key=${verificationKey}`;
         const mailOptions = {
-          from: 'mygroup@cse356.compas.cs.stonybrook.edu',
+          from: 'mygroop@cse356.compas.cs.stonybrook.edu',
           to: email,
           subject: 'Account Verification',
           text: `Please click the following link to verify your account: ${verificationLink}`,
@@ -102,13 +102,11 @@ router.post('/adduser', async (req, res) => {
         await transporter.sendMail(mailOptions);
       } catch (error) {
         console.error(error);
-        return res
-          .status(500)
-          .json({
-            status: 'ERROR',
-            message:
-              'Internal server error. User created but verification email failed to send.',
-          });
+        return res.status(500).json({
+          status: 'ERROR',
+          message:
+            'Internal server error. User created but verification email failed to send.',
+        });
       }
     }
 

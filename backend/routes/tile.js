@@ -15,8 +15,10 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
 
   const options = {
     hostname:
-      process.env.BUILD_ENVIRONMENT === 'docker' ? 'tile-server' : 'localhost',
-    port: process.env.BUILD_ENVIRONMENT === 'docker' ? 80 : 8080,
+      process.env.BUILD_ENVIRONMENT === 'docker'
+        ? 'tile-server'
+        : 'tile-server',
+    port: process.env.BUILD_ENVIRONMENT === 'docker' ? 8080 : 8080,
     path: `/tiles/${layer2}/${v}/${h}`,
     method: 'GET',
   };

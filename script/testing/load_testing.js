@@ -77,7 +77,7 @@ function chooseValue(obj, key) {
 export default function () {
   const baseUrl =
     __ENV.NODE_ENV === 'production'
-      ? 'http://mygroup.cse356.compas.cs.stonybrook.edu'
+      ? 'http://mygroop.cse356.compas.cs.stonybrook.edu'
       : 'http://localhost';
   const bbox = chooseValue(boundingBoxes, 'Stony Brook');
   const source = getRandomCoordinate(bbox);

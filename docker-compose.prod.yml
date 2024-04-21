@@ -16,6 +16,7 @@ services:
       context: ./docker/
       dockerfile: ./nginx.Dockerfile
     platform: linux/amd64
+    image: cse356_project-nginx:prod
 
   frontend:
     container_name: frontend
@@ -23,6 +24,7 @@ services:
       context: ./frontend/
       dockerfile: ../docker/frontend.prod.Dockerfile
     platform: linux/amd64
+    image: cse356_project-frontend:prod
 
   fluentd:
     container_name: fluentd
@@ -30,6 +32,7 @@ services:
       context: ./docker/
       dockerfile: ./fluentd.Dockerfile
     platform: linux/amd64
+    image: cse356_project-fluentd:prod
 
   backend:
     container_name: backend
@@ -37,6 +40,7 @@ services:
       context: ./backend/
       dockerfile: ../docker/backend.prod.Dockerfile
     platform: linux/amd64
+    image: cse356_project-backend:prod
 
   tile-server:
     container_name: tile-server
@@ -44,6 +48,7 @@ services:
       context: ./docker/
       dockerfile: ./tile.Dockerfile
     platform: linux/amd64
+    image: cse356_project-tile-server:prod
 
   search:
     container_name: search_microservice
@@ -54,6 +59,7 @@ services:
     ports:
       - '3003:80'
     restart: always
+    image: cse356_project-search:prod
 
   # mongo:
   #   container_name: mongo
@@ -79,6 +85,7 @@ services:
     ports:
       - '5432:5432'
     restart: always
+    image: cse356_project-db:prod
 
   # tile-cache:
   #   container_name: tile-cache

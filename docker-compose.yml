@@ -30,7 +30,6 @@ services:
 
   frontend:
     container_name: frontend
-    platform: linux/amd64
     build:
       context: ./frontend/
       dockerfile: ../docker/frontend.dev.Dockerfile
@@ -41,7 +40,6 @@ services:
 
   backend:
     container_name: backend
-    platform: linux/amd64
     build:
       context: ./backend/
       dockerfile: ../docker/backend.dev.Dockerfile
@@ -54,7 +52,6 @@ services:
 
   tile-server:
     container_name: tile-server
-    platform: linux/amd64
     build:
       context: ./docker/
       dockerfile: ./tile.Dockerfile
@@ -67,7 +64,6 @@ services:
 
   search:
     container_name: search_microservice
-    platform: linux/amd64
     build:
       context: ./search/
       dockerfile: ../docker/search.Dockerfile
@@ -77,7 +73,6 @@ services:
 
   mongo:
     container_name: mongo
-    platform: linux/amd64
     image: mongo:latest
     volumes:
       - mongo-data:/data/db
@@ -90,7 +85,6 @@ services:
 
   db:
     container_name: db
-    platform: linux/amd64
     build:
       context: ./docker/
       dockerfile: ./db.Dockerfile
@@ -103,13 +97,11 @@ services:
 
   tile-cache:
     container_name: tile-cache
-    platform: linux/amd64
     image: memcached:latest
     command: '-m 512 -I 10m -v'
 
   fluentd:
     container_name: fluentd
-    platform: linux/amd64
     build:
       context: ./docker/
       dockerfile: ./fluentd.Dockerfile
@@ -119,7 +111,6 @@ services:
 
   portainer:
     container_name: portainer
-    platform: linux/amd64
     image: portainer/portainer-ce:2.19.4
     ports:
       - '9443:9443'

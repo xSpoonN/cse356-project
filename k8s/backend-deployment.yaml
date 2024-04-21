@@ -15,6 +15,7 @@ spec:
         cse356-project-default: "true"
         app: backend
     spec:
+      hostNetwork: true
       containers:
         - image: ktao87/cse356:cse356_project-backend
           imagePullPolicy: Always

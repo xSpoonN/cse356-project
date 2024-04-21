@@ -5,15 +5,15 @@ Run `docker compose up` in the root directory
 0) Install kubectl
 1) Create Kubernetes cluster on UpCloud if one doesn't exist already.
 2) In the cluster, go to Kubeconfig > Manual > Download kubeconfig
-3) Set the env ```export KUBECONFIG=clustername_kubeconfig.yaml```
-4) Verify that it works using ```kubectl config view``` and ```kubectl version```
+3) Set the env. Bash: `export KUBECONFIG=clustername_kubeconfig.yaml` or Powershell: `$ENV:KUBECONFIG = "clustername_kubeconfig.yaml`
+4) Verify that it works using `kubectl config view` and `kubectl version`
 
 > If locally built images have changed (or have never been built):
-> 1) Build local images using ```docker compose build``` in root directory
-> 2) Push images to docker hub with ```./k8s/push-images-to-registry.sh```
+> 1) Build local images using `docker compose build` in root directory
+> 2) Push images to docker hub with `./k8s/push-images-to-registry.sh`
 >  - You do not have to rebuild for changes to containers using official images.
 
-5) ```kubectl apply -f ./k8s/```
+5) `kubectl apply -f ./k8s/`
 
 ### Useful Commands
 - ```kubectl version``` - Check the connection to Kubernetes

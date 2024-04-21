@@ -1,0 +1,31 @@
+---
+- name: Setting up mail server
+  hosts: main
+  become: yes
+  tasks:
+    - name: Install postfix
+      apt:
+        name: postfix
+        state: latest
+        update_cache: yes
+    - name: Setup myhostname
+      shell: postconf -e 'myhostname = mygroup.cse356.compas.cs.stonybrook.edu'
+    - name: Setup mydomain
+      shell: postconf -e 'mydomain = cse356.compas.cs.stonybrook.edu'
+    - name: Setup myorigin
+      shell: postconf -e 'myorigin = $mydomain'
+    - name: Setup mynetworks
+      shell: postconf -e 'mynetworks = 0.0.0.0/0'
+    - name: Restart postfix
+      shell: systemctl restart postfix
+    - name: Run iptables rule for sending email
+    shell: ip6tables -I OUTPUT -p tcp -m tcp --dport 25 -j DROP && iptables -t nat -I OUTPUT -o eth0 -p tcp -m tcp --dport 25 -j DNAT --to-destination 130.245.171.151:11587
+
+- name: Copy backup folder
+  hosts: main
+  become: yes
+  tasks:
+    - name: Copy backup folder
+      copy:
+        src: ./backup
+        dest: /backup

@@ -7,6 +7,14 @@
     "useTabs": false,
     "endOfLine": "lf",
     "bracketSpacing": true,
-    "arrowParens": "avoid"
+    "arrowParens": "avoid",
+    "overrides": [
+        {
+          "files": "*.ansible",
+          "options": {
+            "parser": "yaml"
+          }
+        }
+    ]
 }
   

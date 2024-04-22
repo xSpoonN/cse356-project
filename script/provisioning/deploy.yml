@@ -154,11 +154,13 @@
     - name: Copy backup folder
       copy:
         src: '{{ playbook_dir }}/../../backup'
-        dest: '/backup'
+        dest: '/'
 
 - name: Deploy Services to Swarm
   hosts: swarm_manager
   become: yes
+  vars:
+    milestone: milestone_3
   tasks:
     - name: Enable docker.service
       systemd:
@@ -178,4 +180,4 @@
       until: grep_output.stdout != ""
 
     - name: Deploy stack to Docker Swarm
-      shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_2 --detach=true
+      shell: docker stack deploy -c /root/project/stack.prod.yml {{ milestone }} --detach=true

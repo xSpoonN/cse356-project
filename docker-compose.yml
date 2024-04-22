@@ -47,6 +47,8 @@ services:
       context: ./backend/
       dockerfile: ../docker/backend.dev.Dockerfile
     image: backend:dev
+    volumes:
+      - ./backend/routes:/app/routes
     depends_on:
       - tile-server
       - db
@@ -81,7 +83,6 @@ services:
     container_name: mongo
     image: mongo:latest
     volumes:
-      - mongo-data:/data/db
       - mongo-config:/data/configdb
     environment:
       MONGO_INITDB_ROOT_USERNAME: 'root'

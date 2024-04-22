@@ -79,35 +79,33 @@ router.post('/adduser', async (req, res) => {
     await newUser.save();
 
     // Send verification email
-    if (process.env.NODE_ENV === 'production') {
-      try {
-        console.log('Sending verification email');
-        const transporter = nodemailer.createTransport({
-          port: 25,
-          host: 'host.docker.internal',
-          secure: false,
-          tls: {
-            rejectUnauthorized: false,
-          },
-        });
+    try {
+      console.log('Sending verification email');
+      const transporter = nodemailer.createTransport({
+        port: 25,
+        host: 'host.docker.internal',
+        secure: false,
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
 
-        const verificationLink = `http://mygroop.cse356.compas.cs.stonybrook.edu/api/verify?email=${encodeURIComponent(email)}&key=${verificationKey}`;
-        const mailOptions = {
-          from: 'mygroop@cse356.compas.cs.stonybrook.edu',
-          to: email,
-          subject: 'Account Verification',
-          text: `Please click the following link to verify your account: ${verificationLink}`,
-        };
-        console.debug('Sending verification email: ', verificationLink);
-        await transporter.sendMail(mailOptions);
-      } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-          status: 'ERROR',
-          message:
-            'Internal server error. User created but verification email failed to send.',
-        });
-      }
+      const verificationLink = `http://mygroop.cse356.compas.cs.stonybrook.edu/api/verify?email=${encodeURIComponent(email)}&key=${verificationKey}`;
+      const mailOptions = {
+        from: 'mygroop@cse356.compas.cs.stonybrook.edu',
+        to: email,
+        subject: 'Account Verification',
+        text: `Please click the following link to verify your account: ${verificationLink}`,
+      };
+      console.debug('Sending verification email: ', verificationLink);
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        status: 'ERROR',
+        message:
+          'Internal server error. User created but verification email failed to send.',
+      });
     }
 
     res.status(201).send({

@@ -13,6 +13,7 @@ services:
   nginx:
     container_name: nginx
     image: nginx:latest
+    platform: linux/amd64
     ports:
       - '80:80'
     volumes:
@@ -36,7 +37,8 @@ services:
     build:
       context: ./docker/
       dockerfile: ./fluentd.Dockerfile
-    image: 127.0.0.1:5000/fluentd
+    image: ktao87/cse356:fluentd
+    platform: linux/amd64
     volumes:
       - ./logs/:/var/log/fluentd/
     ports:
@@ -52,7 +54,8 @@ services:
     build:
       context: ./frontend/
       dockerfile: ../docker/frontend.prod.Dockerfile
-    image: 127.0.0.1:5000/frontend
+    image: ktao87/cse356:frontend
+    platform: linux/amd64
     depends_on:
       - fluentd
       - backend
@@ -65,10 +68,11 @@ services:
 
   backend:
     container_name: backend
-    image: 127.0.0.1:5000/backend
     build:
       context: ./backend/
       dockerfile: ../docker/backend.prod.Dockerfile
+    image: ktao87/cse356:backend
+    platform: linux/amd64
     depends_on:
       - tile-server
       - mongo
@@ -92,6 +96,7 @@ services:
   mongo:
     container_name: mongo
     image: mongo:latest
+    platform: linux/amd64
     volumes:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
@@ -112,7 +117,8 @@ services:
       dockerfile: ./tile.Dockerfile
     depends_on:
       - db
-    image: 127.0.0.1:5000/tile-server
+    image: ktao87/cse356:tile-server
+    platform: linux/amd64
     restart: always
     deploy:
       placement:
@@ -122,6 +128,7 @@ services:
   tile-cache:
     container_name: tile-cache
     image: memcached:latest
+    platform: linux/amd64
     command: '-m 512 -I 10m'
     deploy:
       placement:
@@ -133,7 +140,8 @@ services:
     build:
       context: ./search/
       dockerfile: ../docker/search.Dockerfile
-    image: 127.0.0.1:5000/search
+    image: ktao87/cse356:search
+    platform: linux/amd64
     depends_on:
       - db
     restart: always
@@ -147,7 +155,8 @@ services:
     build:
       context: ./docker/
       dockerfile: ./db.Dockerfile
-    image: 127.0.0.1:5000/db
+    image: ktao87/cse356:db
+    platform: linux/amd64
     volumes:
       - osm-data:/var/lib/postgresql/14/main
       - /backup:/backup
@@ -159,6 +168,7 @@ services:
 
   agent:
     image: portainer/agent:2.19.4
+    platform: linux/amd64
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/volumes:/var/lib/docker/volumes
@@ -172,6 +182,7 @@ services:
 
   portainer:
     image: portainer/portainer-ce:2.19.4
+    platform: linux/amd64
     command: -H tcp://tasks.agent:9001 --tlsskipverify
     ports:
       - '9443:9443'

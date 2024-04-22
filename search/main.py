@@ -54,6 +54,8 @@ async def search(query: SearchQuery):
 
     try:
         response = await api.search(query.searchTerm, bounded_viewbox=True if query.onlyInBox else False, viewbox=f"{query.bbox.minLon},{query.bbox.maxLat},{query.bbox.maxLon},{query.bbox.minLat}", max_results=30)
+        print(response)
+
         box_center = [
             (query.bbox.minLat + query.bbox.maxLat) / 2,
             (query.bbox.minLon + query.bbox.maxLon) / 2,
@@ -63,7 +65,7 @@ async def search(query: SearchQuery):
         if query.onlyInBox:
             for item in response:
                 result.append({
-                    "name": item.display_name,
+                    "name": item.display_name if item.display_name else f"{item.address['housenumber']} {item.address['street']}, {item.address['city']}, {item.address['state']}",
                     "coordinates": {
                         "lat": item.centroid.lat,
                         "lon": item.centroid.lon
@@ -79,7 +81,7 @@ async def search(query: SearchQuery):
         else:
             for item in response:
                 result.append({
-                    "name": item.display_name,
+                    "name": item.display_name if item.display_name else f"{item.address['housenumber']} {item.address['street']}, {item.address['city']}, {item.address['state']}",
                     "coordinates": {
                         "lat": item.centroid.lat,
                         "lon": item.centroid.lon

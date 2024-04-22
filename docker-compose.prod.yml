@@ -1,7 +1,10 @@
 services:
-  # nginx:
-  #   image: nginx:latest
-  #   platform: linux/amd64
+  nginx:
+    build:
+      context: ./docker/
+      dockerfile: ./nginx.Dockerfile
+    image: ktao87/cse356:nginx
+    platform: linux/amd64
 
   fluentd:
     build:

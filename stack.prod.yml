@@ -11,11 +11,9 @@ volumes:
 
 services:
   nginx:
-    image: nginx:latest
+    image: ktao87/cse356:nginx
     ports:
       - '80:80'
-    volumes:
-      - './docker/nginx.conf:/etc/nginx/nginx.conf'
     depends_on:
       - frontend
       - backend

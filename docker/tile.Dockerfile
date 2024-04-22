@@ -114,7 +114,3 @@ RUN a2enmod tile && \
 
 CMD service apache2 restart; \
     G_MESSAGES_DEBUG=info renderd -f;
-
-RUN wget https://raw.githubusercontent.com/alx77/render_list_geo.pl/master/render_list_geo.pl && \
-    chmod +x render_list_geo.pl && \
-    ./render_list_geo.pl -x -77.55 -X -71.06 -y 40.31 -Y 44.2 -z 10 -Z 20 -n 4

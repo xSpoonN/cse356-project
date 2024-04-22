@@ -1,15 +1,20 @@
 ---
-- name: Setup VMs
+- name: Prepare docker images
+  hosts: swarm_manager
+  tasks:
+    - name: Build the Docker image
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" build
+    - name: Push the Docker image
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" push
+
+- name: Update the project
   hosts: swarm_manager
   become: yes
   vars:
     project_branch: main
+    milestone: milestone_3
 
   tasks:
-    - name: Remove the currently running stack
-      shell: docker stack rm milestone_2
-      ignore_errors: true
-
     - name: Pull the new change from the remote repo
       git:
         repo: 'git@github.com:goodgoed/CSE356_project.git'
@@ -23,11 +28,5 @@
       args:
         chdir: '/root/project'
 
-    - name: Build images
-      shell: docker compose -f /root/project/docker-compose.prod.yml build
-
-    - name: Push images to local registry
-      shell: docker compose -f /root/project/docker-compose.prod.yml push
-
     - name: Deploy stack to Docker Swarm
-      shell: docker stack deploy -c /root/project/docker-compose.prod.yml milestone_2 --detach=true
+      shell: docker stack deploy -c /root/project/stack.prod.yml {{ milestone }} --detach=true

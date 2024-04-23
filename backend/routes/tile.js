@@ -14,7 +14,9 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
   }
   const layer2 = layer.startsWith('l') ? layer.substring(1) : layer;
   const url = `https://tile.openstreetmap.org/${layer2}/${v}/${h}`;
-  const delay = Math.min(20 * (-Math.log(1 - Math.random()) / 0.8), 1000);
+  const delay =
+    Math.min(20 * (-Math.log(1 - Math.random()) / 0.8), 1000) +
+    (Math.random() < 0.005 ? 2000 : 0);
 
   await new Promise(resolve => setTimeout(resolve, delay));
   /* const options = {

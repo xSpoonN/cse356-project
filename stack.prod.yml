@@ -94,13 +94,16 @@ services:
     image: ktao87/cse356:tile-server
     restart: always
     deploy:
+      replicas: 2
       placement:
         constraints:
           - node.hostname == tile-server
 
   tile-cache:
-    image: memcached:latest
-    command: '-m 512 -I 10m'
+    image: bitnami/memcached:latest
+    environment:
+      - MEMCACHED_CACHE_SIZE=3500
+      - MEMCACHED_MAX_ITEM_SIZE=10
     deploy:
       placement:
         constraints:

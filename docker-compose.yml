@@ -11,6 +11,7 @@ volumes:
   mongo-data:
   mongo-config:
   portainer_data:
+  nominatim-data:
 
 services:
   nginx:
@@ -67,15 +68,36 @@ services:
     shm_size: 2gb
     restart: always
 
+  # search:
+  #   container_name: search_microservice
+  #   build:
+  #     context: ./search/
+  #     dockerfile: ../docker/search.Dockerfile
+  #   image: search
+  #   ports:
+  #     - '3003:80'
+  #   restart: always
   search:
-    container_name: search_microservice
-    build:
-      context: ./search/
-      dockerfile: ../docker/search.Dockerfile
-    image: search
+    container_name: nominatim
+    image: mediagis/nominatim:4.0
     ports:
-      - '3003:80'
-    restart: always
+      - '3003:8080'
+    environment:
+      PBF_URL: https://download.geofabrik.de/europe/monaco-latest.osm.pbf
+      NOMINATIM_TOKENIZER: icu
+      NOMINATIM_DATABASE_DSN: pgsql:dbname=nominatim;user=postgres;password=mysecretpassword;host=db;port=5432
+      PGDATABASE: nominatim
+      PGUSER: postgres
+      PGPASSWORD: mysecretpassword
+      PGHOST: db
+      NOMINATIM_PASSWORD: mysecretpassword
+      POSTGRES_SHARED_BUFFERS: 2GB # 25% of total memory
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
+      POSTGRES_AUTOVACUUM_WORK_MEM: 2GB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+    shm_size: 256mb
 
   mongo:
     container_name: mongo

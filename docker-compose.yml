@@ -65,6 +65,7 @@ services:
     ports:
       - '8080:80'
     restart: always
+    shm_size: '2gb'
 
   search:
     container_name: search_microservice
@@ -100,6 +101,14 @@ services:
       - '5432:5432'
     shm_size: '2gb'
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '8g'
+        reservations:
+          cpus: '0.25'
+          memory: '512m'
 
   tile-cache:
     container_name: tile-cache

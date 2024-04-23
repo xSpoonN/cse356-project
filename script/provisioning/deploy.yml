@@ -147,13 +147,6 @@
       shell: docker swarm join --token {{ hostvars[groups['swarm_manager'][0]].worker_join_token.stdout }} {{ hostvars[groups['swarm_manager'][0]].ansible_default_ipv4.address }}:2377
       ignore_errors: true
 
-- name: Copy backup folder
-  hosts: db
-  become: yes
-  tasks:
-    - name: Copy backup folder
-      local_action: ansible.builtin.command scp -C -i "{{ ansible_ssh_private_key_file }}" "{{ playbook_dir }}/../../backup" {{ ssh_user }}@{{ target_host }}:/
-
 - name: Deploy Services to Swarm
   hosts: swarm_manager
   become: yes

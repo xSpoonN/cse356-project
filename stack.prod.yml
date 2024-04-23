@@ -104,6 +104,8 @@ services:
     environment:
       - MEMCACHED_CACHE_SIZE=3500 #in mb
       - MEMCACHED_MAX_ITEM_SIZE=1048576 #in bytes
+      - MEMCACHED_THREADS=2
+    command: /opt/bitnami/scripts/memcached/run.sh -vv
     deploy:
       placement:
         constraints:

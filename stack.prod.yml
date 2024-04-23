@@ -126,6 +126,10 @@ services:
     volumes:
       - osm-data:/var/lib/postgresql/14/main
       - /backup:/backup
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 2048000000 # 2gb
     restart: always
     deploy:
       placement:

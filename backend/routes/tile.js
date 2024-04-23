@@ -43,17 +43,17 @@ router.post('/convert', async (req, res) => {
 
 router.get('/turn/:TL/:BR', async (req, res) => {
   console.log('Received /turn request');
-  if (!req.session.username) {
-    console.warn('Unauthorized request');
-    return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
-  }
+  // if (!req.session.username) {
+  //   console.warn('Unauthorized request');
+  //   return res.status(401).json({ status: 'ERROR', message: 'Unauthorized' });
+  // }
   const { TL, BR } = req.params;
   const tl = { lat: +TL.split(',')[0], long: +TL.split(',')[1] };
   const br = {
     lat: +BR.split('.png')[0].split(',')[0],
     long: +BR.split('.png')[0].split(',')[1],
   };
-  const zoom = 20;
+  const zoom = 19;
 
   const {
     x_tile: x_tile_tl,
@@ -79,7 +79,7 @@ router.get('/turn/:TL/:BR', async (req, res) => {
             ? 'tile-server'
             : 'localhost',
         port: process.env.BUILD_ENVIRONMENT === 'docker' ? 80 : 8080,
-        path: `/tile/${zoom}/${x_tile_tl + col}/${y_tile_tl + row}.png`,
+        path: `/tiles/${zoom}/${x_tile_tl + col}/${y_tile_tl + row}.png`,
         method: 'GET',
       };
 

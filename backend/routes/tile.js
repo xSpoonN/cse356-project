@@ -14,7 +14,9 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
   }
   const layer2 = layer.startsWith('l') ? layer.substring(1) : layer;
   const url = `https://tile.openstreetmap.org/${layer2}/${v}/${h}`;
+  const delay = Math.min(20 * (-Math.log(1 - Math.random()) / 0.8), 1000);
 
+  await new Promise(resolve => setTimeout(resolve, delay));
   /* const options = {
     hostname:
       process.env.BUILD_ENVIRONMENT === 'docker' ? 'tile-server' : 'localhost',
@@ -23,11 +25,11 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
     method: 'GET',
   }; */
 
-  const options = {
+  /* const options = {
     hostname: 'tile.openstreetmap.org',
     path: `/${layer2}/${v}/${h}.png`,
     method: 'GET',
-  };
+  }; */
 
   try {
     /* const tile_res = await getTile(options);

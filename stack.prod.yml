@@ -102,8 +102,8 @@ services:
   tile-cache:
     image: bitnami/memcached:latest
     environment:
-      - MEMCACHED_CACHE_SIZE=3500
-      - MEMCACHED_MAX_ITEM_SIZE=10
+      - MEMCACHED_CACHE_SIZE=3500 #in mb
+      - MEMCACHED_MAX_ITEM_SIZE=1048576 #in bytes
     deploy:
       placement:
         constraints:

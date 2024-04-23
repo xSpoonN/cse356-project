@@ -7,7 +7,7 @@ x-logging-options: &logging
       fluentd-async-connect: 'true'
 
 volumes:
-  osm-data1:
+  osm-data:
   mongo-data:
   mongo-config:
   portainer_data:
@@ -95,7 +95,7 @@ services:
       dockerfile: ./db.Dockerfile
     image: db:dev
     volumes:
-      - osm-data1:/var/lib/postgresql/14/main
+      - osm-data:/var/lib/postgresql/14/main
       - ./backup:/backup
     ports:
       - '5432:5432'

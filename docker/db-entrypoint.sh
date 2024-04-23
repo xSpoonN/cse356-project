@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OSM_FILE=/var/lib/postgresql/14/main/new-york.osm.pbf
+OSM_FILE=/var/lib/postgresql/14/main/us-northeast.osm.pbf
 export NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;port=5432;dbname=nominatim;user=postgres;password=mysecretpassword"
 
 initializeDatabase() {
@@ -59,7 +59,7 @@ restoreBackups() {
 }
 
 importData() {
-    wget -nv https://grading.cse356.compas.cs.stonybrook.edu/data/new-york.osm.pbf -O $OSM_FILE
+    wget -nv https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf -O $OSM_FILE
 
     importTileServerData
     importSearchServerData

@@ -18,7 +18,7 @@ services:
     build:
       context: ./docker/
       dockerfile: ./nginx.Dockerfile
-    image: nginx:dev
+    image: nginx
     ports:
       - '80:80'
     volumes:
@@ -35,7 +35,7 @@ services:
     build:
       context: ./frontend/
       dockerfile: ../docker/frontend.dev.Dockerfile
-    image: frontend:dev
+    image: frontend
     depends_on:
       - fluentd
       - backend
@@ -46,7 +46,7 @@ services:
     build:
       context: ./backend/
       dockerfile: ../docker/backend.dev.Dockerfile
-    image: backend:dev
+    image: backend
     volumes:
       - ./backend/routes:/app/routes
     depends_on:
@@ -61,10 +61,10 @@ services:
     build:
       context: ./docker/
       dockerfile: ./tile.Dockerfile
-    image: tile-server:dev
+    image: tile-server
     ports:
       - '8080:80'
-    shm_size: 256mb
+    shm_size: 2gb
     restart: always
 
   search:
@@ -72,7 +72,7 @@ services:
     build:
       context: ./search/
       dockerfile: ../docker/search.Dockerfile
-    image: search:dev
+    image: search
     ports:
       - '3003:80'
     restart: always
@@ -93,12 +93,13 @@ services:
     build:
       context: ./docker/
       dockerfile: ./db.Dockerfile
-    image: db:dev
+    image: db
     volumes:
       - osm-data:/var/lib/postgresql/14/main
       - ./backup:/backup
     ports:
       - '5432:5432'
+    shm_size: 2gb
     restart: always
 
   tile-cache:
@@ -111,7 +112,7 @@ services:
     build:
       context: ./docker/
       dockerfile: ./fluentd.Dockerfile
-    image: fluentd:dev
+    image: fluentd
     ports:
       - '24224:24224'
       - '24224:24224/udp'

@@ -25,8 +25,8 @@ export default function Map() {
 
   useEffect(() => {
     const newMap = L.map('map', { attributionControl: false }).setView(
-      [42, -74],
-      7
+      [40.824, -73.165],
+      12
     );
     L.tileLayer(
       `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/tiles/{z}/{x}/{y}.png`,

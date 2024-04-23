@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const sharp = require('sharp');
+const axios = require('axios');
 
 router = express.Router();
 
@@ -12,19 +13,34 @@ router.get('/tiles/:layer/:v/:h', async (req, res) => {
     return res.status(404).json({ status: 'ERROR', message: 'Tile Not Found' });
   }
   const layer2 = layer.startsWith('l') ? layer.substring(1) : layer;
+  const url = `https://tile.openstreetmap.org/${layer2}/${v}/${h}`;
 
-  const options = {
+  /* const options = {
     hostname:
       process.env.BUILD_ENVIRONMENT === 'docker' ? 'tile-server' : 'localhost',
     port: process.env.BUILD_ENVIRONMENT === 'docker' ? 8080 : 8080,
     path: `/tiles/${layer2}/${v}/${h}`,
     method: 'GET',
+  }; */
+
+  const options = {
+    hostname: 'tile.openstreetmap.org',
+    path: `/${layer2}/${v}/${h}.png`,
+    method: 'GET',
   };
 
   try {
-    const tile_res = await getTile(options);
+    /* const tile_res = await getTile(options);
     res.writeHead(200, { 'Content-Type': 'image/png' });
-    res.end(tile_res);
+    res.end(tile_res); */
+    const tile_res = await axios.get(url, {
+      responseType: 'arraybuffer',
+      headers: {
+        'Cache-Control': undefined,
+      },
+    });
+    res.writeHead(200, { 'Content-Type': 'image/png' });
+    res.end(Buffer.from(tile_res.data, 'binary'));
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: 'ERROR', message: 'Internal Server Error' });
@@ -169,14 +185,24 @@ const convertToTile = (lat, long, zoom) => {
 
 const getTile = async options => {
   return new Promise((resolve, reject) => {
-    const tile_req = http.request(options, response => {
-      const chunks = [];
-      response.on('data', chunk => chunks.push(chunk));
-      response.on('end', () => resolve(Buffer.concat(chunks)));
-      response.on('error', err => reject(new Error('Internal Server Error')));
+    const req = http.get(options, res => {
+      let data = '';
+      res.setEncoding('binary');
+
+      res.on('data', chunk => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        resolve(data);
+      });
     });
-    tile_req.on('error', err => reject(new Error('Internal Server Error')));
-    tile_req.end();
+
+    req.on('error', err => {
+      reject(err);
+    });
+
+    req.end();
   });
 };
 

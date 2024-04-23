@@ -15,14 +15,14 @@ async function connect_db() {
 
 router = express.Router();
 
-router.use((req, res, next) => {
-  if (!req.session.username) {
-    console.warn('Received unauthorized request');
-    return res.status(200).json({ status: 'ERROR', message: 'Unauthorized' });
-  }
+// router.use((req, res, next) => {
+//   if (!req.session.username) {
+//     console.warn('Received unauthorized request');
+//     return res.status(200).json({ status: 'ERROR', message: 'Unauthorized' });
+//   }
 
-  next();
-});
+//   next();
+// });
 
 router.post('/route', async (req, res) => {
   console.log('Received /route request');

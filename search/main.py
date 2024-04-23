@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pathlib import Path
 from pydantic import BaseModel
 import nominatim.api as napi
+from nominatim.api import DataLayer
 import math
 
 # Define the FastAPI application
@@ -53,7 +54,7 @@ async def search(query: SearchQuery):
         )
 
     try:
-        response = await api.search(query.searchTerm, bounded_viewbox=True if query.onlyInBox else False, viewbox=f"{query.bbox.minLon},{query.bbox.maxLat},{query.bbox.maxLon},{query.bbox.minLat}", max_results=30)
+        response = await api.search(query.searchTerm, bounded_viewbox=True if query.onlyInBox else False, viewbox=f"{query.bbox.minLon},{query.bbox.maxLat},{query.bbox.maxLon},{query.bbox.minLat}", max_results=30, layers=DataLayer.ADDRESS | DataLayer.POI | DataLayer.RAILWAY | DataLayer.NATURAL | DataLayer.MANMADE, linked_places=True)
         print(response)
 
         box_center = [

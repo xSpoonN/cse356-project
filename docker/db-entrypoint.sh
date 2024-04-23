@@ -1,7 +1,9 @@
 #!/bin/bash
 
+export PROJECT_DIR=/Nominatim-4.4.0/nominatim
+
 OSM_FILE=/var/lib/postgresql/14/main/us-northeast.osm.pbf
-export NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;port=5432;dbname=nominatim;user=postgres;password=mysecretpassword"
+THREADS=8
 
 initializeDatabase() {
     locale-gen en_US.UTF-8
@@ -61,14 +63,14 @@ restoreBackups() {
 importData() {
     wget -nv https://grading.cse356.compas.cs.stonybrook.edu/data/us-northeast.osm.pbf -O $OSM_FILE
 
-    importTileServerData
     importSearchServerData
+    importTileServerData
     importRoutingData
 
     # Check if all import-complete files exist
-    if [[ -f /var/lib/postgresql/14/main/tile-import-complete && \
+    if [[ -f /var/lib/postgresql/14/main/tileserver-import-complete && \
           -f /var/lib/postgresql/14/main/routing-import-complete && \
-          -f /var/lib/postgresql/14/main/search-import-complete ]]; then
+          -f /var/lib/postgresql/14/main/nominatim-import-complete ]]; then
         touch /var/lib/postgresql/14/main/entrypoint-complete
         echo "All data imported successfully, entrypoint-complete touched."
     else
@@ -82,7 +84,7 @@ importTileServerData() {
         chown -R postgres:postgres /openstreetmap-carto
         chmod -R u+rwX /openstreetmap-carto
         cd /openstreetmap-carto && sudo -E -u postgres python3 scripts/get-external-data.py -d gis
-        sudo -E -u postgres osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /openstreetmap-carto/openstreetmap-carto.lua -C 2500 --number-processes 4 -S /openstreetmap-carto/openstreetmap-carto.style $OSM_FILE
+        sudo -E -u postgres osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /openstreetmap-carto/openstreetmap-carto.lua -C 2500 --number-processes $THREADS -S /openstreetmap-carto/openstreetmap-carto.style $OSM_FILE
         sudo -E -u postgres psql -d gis -f /openstreetmap-carto/indexes.sql
 
         if [ $? -ne 0 ]; then
@@ -100,16 +102,14 @@ importSearchServerData() {
         echo 'Nominatim data not imported yet. Try importing...'
         chown -R postgres:postgres /Nominatim-4.4.0
         chmod -R u+rwX /Nominatim-4.4.0
-        cd /Nominatim-4.4.0 && NOMINATIM_TOKENIZER=icu sudo -E -u postgres nominatim import --osm-file $OSM_FILE --threads 4
+        cd /Nominatim-4.4.0 && NOMINATIM_TOKENIZER=icu sudo -E -u postgres nominatim import --osm-file $OSM_FILE --threads $THREADS
         
         if [ $? -ne 0 ]; then
             echo 'Failed to import search data.'
             exit 1
         fi
 
-        nominatim index --threads 4
-        nominatim admin --check-database
-        nominatim admin --warm
+        nominatim index --threads $THREADS
         touch /var/lib/postgresql/14/main/nominatim-import-complete
         echo "Finish importing search-server data."
     fi
@@ -134,8 +134,9 @@ importRoutingData() {
 }
 
 startService() {
-    nominatim admin --check-database
-    nominatim admin --warm
+    cd $PROJECT_DIR
+    sudo -u postgres nominatim admin --check-database
+    sudo -u postgres nominatim admin --warm
     export NOMINATIM_QUERY_TIMEOUT=10
     export NOMINATIM_REQUEST_TIMEOUT=60
 

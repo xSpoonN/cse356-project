@@ -8,12 +8,15 @@ volumes:
   mongo-data:
   mongo-config:
   portainer_data:
+  tile-caches:
 
 services:
   nginx:
     image: ktao87/cse356:nginx
     ports:
       - '80:80'
+    volumes:
+      - tile-caches:/var/cache/tiles
     depends_on:
       - frontend
       - backend
@@ -94,7 +97,7 @@ services:
     image: ktao87/cse356:tile-server
     restart: always
     deploy:
-      replicas: 2
+      replicas: 4
       placement:
         constraints:
           - node.hostname == tile-server

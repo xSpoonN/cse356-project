@@ -65,8 +65,6 @@ services:
     ports:
       - '8080:80'
     shm_size: 256mb
-    depends_on:
-      - db
     restart: always
 
   search:

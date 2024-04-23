@@ -78,7 +78,8 @@ RUN --mount=id=ubuntu:${ubuntu_version}-/var/cache/apt,sharing=locked,target=/va
         git \
         wget \
         npm \
-        fonts-noto-cjk fonts-noto-hinted fonts-noto-unhinted fonts-unifont fonts-hanazono fonts-dejavu 
+        fonts-noto-cjk fonts-noto-hinted fonts-noto-unhinted fonts-unifont fonts-hanazono fonts-dejavu \
+        netcat
 
 # Install stylesheet
 RUN git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 && cd openstreetmap-carto \
@@ -88,6 +89,9 @@ RUN git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/op
 && sed -i 's/Noto Sans Syriac Eastern Regular/Noto Sans Syriac Regular/g' style/fonts.mss \
 && rm -rf .git
 RUN npm install -g carto
+
+# Install pre-rendering tool
+RUN wget https://raw.githubusercontent.com/alx77/render_list_geo.pl/master/render_list_geo.pl -P /usr/bin && chmod +x /usr/bin/render_list_geo.pl
 
 # Setup remote db connection
 RUN sed -i '/osm2pgsql:/a \    host: "db"' /openstreetmap-carto/project.mml && \
@@ -112,5 +116,6 @@ COPY renderd.conf /etc/renderd.conf
 RUN a2enmod tile && \
     a2ensite 000-default
 
-CMD service apache2 restart; \
-    G_MESSAGES_DEBUG=info renderd -f;
+COPY ./tile-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

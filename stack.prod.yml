@@ -92,8 +92,6 @@ services:
 
   tile-server:
     image: ktao87/cse356:tile-server
-    depends_on:
-      - db
     restart: always
     deploy:
       placement:

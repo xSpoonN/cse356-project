@@ -17,7 +17,7 @@ RUN apt-get update && \
     # fonts for tile rendering
     fonts-noto-cjk fonts-noto-hinted fonts-noto-unhinted fonts-unifont fonts-hanazono \
     # extra tools
-    wget unzip dos2unix gzip screen locate git tar curl net-tools sudo && \
+    wget unzip dos2unix gzip screen locate git tar curl net-tools sudo netcat && \
     # Clean up
     rm -rf /var/lib/apt/lists/*
 

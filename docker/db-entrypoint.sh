@@ -1,12 +1,14 @@
 #!/bin/bash
 
 OSM_FILE=/var/lib/postgresql/14/main/new-york.osm.pbf
+export NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;port=5432;dbname=nominatim;user=postgres;password=mysecretpassword"
 
 initializeDatabase() {
+    locale-gen en_US.UTF-8
+    chown postgres /var/lib/postgresql/14/main
+
     if [ ! -f /var/lib/postgresql/14/main/entrypoint-complete ]; then
         rm -rf /var/lib/postgresql/14/main/*
-        locale-gen en_US.UTF-8
-        chown postgres /var/lib/postgresql/14/main
         sudo -u postgres /usr/lib/postgresql/14/bin/initdb -E 'UTF-8' --lc-collate='en_US.UTF-8' --lc-ctype='en_US.UTF-8' -D /var/lib/postgresql/14/main
     fi 
 
@@ -35,7 +37,6 @@ restoreBackups() {
     pid_gis=$!  # Capture PID of the GIS background process
 
     # Restore Nominatim dump file
-    export NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;port=5432;dbname=nominatim;user=postgres;password=mysecretpassword"
     sudo -E -u postgres psql -c "CREATE DATABASE nominatim ENCODING 'UTF8'"
     gzip -dc /backup/nominatim.gz | sudo -u postgres pg_restore -d nominatim &
     pid_nominatim=$!  # Capture PID of the Nominatim background process
@@ -97,7 +98,6 @@ importTileServerData() {
 importSearchServerData() {
     if [ ! -f /var/lib/postgresql/14/main/nominatim-import-complete ]; then
         echo 'Nominatim data not imported yet. Try importing...'
-        export NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;port=5432;dbname=nominatim;user=postgres;password=mysecretpassword"
         chown -R postgres:postgres /Nominatim-4.4.0
         chmod -R u+rwX /Nominatim-4.4.0
         cd /Nominatim-4.4.0 && NOMINATIM_TOKENIZER=icu sudo -E -u postgres nominatim import --osm-file $OSM_FILE --threads 4
@@ -142,8 +142,9 @@ startService() {
     tail -Fv /var/log/postgresql/postgresql-14-main.log &
     tailpid=${!}
 
-    trap "kill $tailpid && service postgresql stop" SIGINT SIGTERM
-    wait
+    echo "Notifying services that db is ready"
+    echo "Script execution complete" | nc tile-server 1234
+    wait $tailpid
 }
 
 cleanUp() {

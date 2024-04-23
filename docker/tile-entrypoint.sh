@@ -1,8 +1,14 @@
 #!/bin/bash
 
-echo "Waiting for db to initialize..."
-message=$(nc -lp 1234 -q 0)
-echo "Received message: $message"
+# Try to make connection to db
+echo "Trying to connect to db..."
+PGPASSWORD=mysecretpassword psql -h db -U postgres -d gis -c "SELECT 1" > /dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "Waiting for db to initialize..."
+    message=$(nc -lp 1234 -q 0)
+    echo "Received message: $message"
+fi
 
 echo "Starting apache2 and renderd"
 service apache2 restart

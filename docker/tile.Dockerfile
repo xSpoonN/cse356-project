@@ -79,7 +79,8 @@ RUN --mount=id=ubuntu:${ubuntu_version}-/var/cache/apt,sharing=locked,target=/va
         wget \
         npm \
         fonts-noto-cjk fonts-noto-hinted fonts-noto-unhinted fonts-unifont fonts-hanazono fonts-dejavu \
-        netcat
+        netcat \
+        postgresql-client
 
 # Install stylesheet
 RUN git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 && cd openstreetmap-carto \

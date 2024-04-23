@@ -42,7 +42,7 @@ RUN unzip osm2po.zip -d /osm2po && \
     rm osm2po.zip
 
 # Configure postgres.
-RUN echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/14/main/pg_hba.conf \
+RUN echo "host all all 0.0.0.0/0 reject" >> /etc/postgresql/14/main/pg_hba.conf \
     && echo "listen_addresses='*'" >> /etc/postgresql/14/main/postgresql.conf
 COPY ./postgres-tuning.conf /etc/postgresql/14/main/conf.d/
 

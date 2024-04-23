@@ -139,6 +139,10 @@ startService() {
     export NOMINATIM_QUERY_TIMEOUT=10
     export NOMINATIM_REQUEST_TIMEOUT=60
 
+    # change pg_hba.conf to allow all connections
+    sed -i 's/host all all 0\.0\.0\.0\/0 reject/host all all 0\.0\.0\.0\/0 md5/' /etc/postgresql/14/main/pg_hba.conf
+    sudo -u postgres psql -c "SELECT pg_reload_conf();"
+
     tail -Fv /var/log/postgresql/postgresql-14-main.log &
     tailpid=${!}
 

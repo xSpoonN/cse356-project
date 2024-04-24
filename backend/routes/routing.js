@@ -70,10 +70,18 @@ router.post('/route', async (req, res) => {
         lon: parseFloat(row.lon),
       },
     }));
-    console.debug('Query Result: ', route);
+    const noDuplicates = route.filter((step, index, self) => {
+      index ===
+        self.findIndex(
+          t =>
+            t.coordinates.lat === step.coordinates.lat &&
+            t.coordinates.lon === step.coordinates.lon
+        );
+    });
+    console.debug('Query Result: ', noDuplicates);
 
     client.release();
-    return res.status(200).json(route);
+    return res.status(200).json(noDuplicates);
   } catch (error) {
     console.error('Error executing query', error);
     client.release();

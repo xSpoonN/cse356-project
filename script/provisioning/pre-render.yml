@@ -14,5 +14,14 @@
           echo "No process found to kill."
         fi
       ignore_errors: true
+    - name: kill existing render_list_geo
+      shell: |
+        pids=$(ps aux | grep '[r]ender_list' | awk '{print $2}')
+        if [ -n "$pids" ]; then
+          kill -9 $pids
+        else
+          echo "No process found to kill."
+        fi
+      ignore_errors: true
     - name: pre-render tiles
-      shell: nohup docker exec -i {{ container_id.stdout }} render_list_geo.pl -n 4 -l 4 -x -78.24 -X -71.05 -y 40.39 -Y 43.49 -z 6 -Z 18 -t /var/cache/tiles > /dev/null 2>&1 &
+      shell: nohup docker exec -i {{ container_id.stdout }} render_list_geo.pl -x -80.96 -X -66.88 -y 38.31 -Y 47.37 -z 12 -Z 15 -n 4 -l 4 -t /var/cache/tiles > /dev/null 2>&1 &

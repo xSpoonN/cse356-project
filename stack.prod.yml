@@ -102,17 +102,17 @@ services:
         constraints:
           - node.hostname == tile-server
 
-  tile-cache:
-    image: bitnami/memcached:latest
-    environment:
-      - MEMCACHED_CACHE_SIZE=3500 #in mb
-      - MEMCACHED_MAX_ITEM_SIZE=31457280 #in bytes
-      - MEMCACHED_THREADS=2
-    command: /opt/bitnami/scripts/memcached/run.sh -vv
-    deploy:
-      placement:
-        constraints:
-          - node.hostname == cache
+  # tile-cache:
+  #   image: bitnami/memcached:latest
+  #   environment:
+  #     - MEMCACHED_CACHE_SIZE=3500 #in mb
+  #     - MEMCACHED_MAX_ITEM_SIZE=31457280 #in bytes
+  #     - MEMCACHED_THREADS=2
+  #   command: /opt/bitnami/scripts/memcached/run.sh -vv
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - node.hostname == cache
 
   search:
     image: ktao87/cse356:search

@@ -113,6 +113,9 @@ COPY --from=builder /tmp/mod_tile /
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY renderd.conf /etc/renderd.conf
 
+# Create cache directory
+RUN mkdir -p /var/cache/tiles
+
 ## Enable module & site
 RUN a2enmod tile && \
     a2ensite 000-default

@@ -158,6 +158,9 @@
         name: docker.service
         daemon_reload: true
         enabled: true
+    
+    - name: Add label to the manager node
+      shell: docker node update --label-add monitoring=true {{ hostvars[groups['swarm_manager'][0]].ansible_hostname }}
 
     - name: Check hostname of workers are changed
       shell: docker node ls | grep "{{ hostvars[worker]['custom_hostname'] }}"
@@ -169,6 +172,3 @@
       retries: 5
       delay: 3
       until: grep_output.stdout != ""
-
-    - name: Deploy stack to Docker Swarm
-      shell: docker stack deploy -c /root/project/stack.prod.yml {{ milestone }} --detach=true

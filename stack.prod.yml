@@ -8,7 +8,8 @@ volumes:
   mongo-data:
   mongo-config:
   portainer_data:
-  tile-caches:
+  nginx-tile-cache:
+  tile-server-cache:
 
 services:
   nginx:
@@ -16,13 +17,15 @@ services:
     ports:
       - '80:80'
     volumes:
-      - tile-caches:/var/cache/tiles
+      - nginx-tile-cache:/var/cache/tiles
     depends_on:
       - frontend
       - backend
       - search
       - tile-server
     deploy:
+      restart_policy:
+        condition: none
       placement:
         constraints:
           - node.role == manager
@@ -51,8 +54,9 @@ services:
       - fluentd
       - backend
       - search
-    restart: always
     deploy:
+      restart_policy:
+        condition: none
       placement:
         constraints:
           - node.role == manager
@@ -61,13 +65,11 @@ services:
     image: ktao87/cse356:backend
     depends_on:
       - mongo
-    restart: always
     extra_hosts:
       host.docker.internal: host-gateway
     deploy:
       restart_policy:
         condition: on-failure
-        max_attempts: 3
       placement:
         constraints:
           - node.role == manager
@@ -87,21 +89,33 @@ services:
       MONGO_INITDB_ROOT_USERNAME: 'root'
       MONGO_INITDB_ROOT_PASSWORD: 'password'
       MONGO_INITDB_DATABASE: 'user'
-    restart: always
     deploy:
+      restart_policy:
+        condition: on-failure
       placement:
         constraints:
           - node.role == manager
 
   tile-server:
     image: ktao87/cse356:tile-server
-    restart: always
+    volumes:
+      - tile-server-cache:/var/cache/tiles
     deploy:
-      replicas: 4
+      resources:
+        limits:
+          cpus: '4'
+          memory: 7.5GB
+        reservations:
+          cpus: '4'
+          memory: 6GB
+      replicas: 3
+      restart_policy:
+        condition: on-failure
       placement:
         constraints:
           - node.hostname == tile-server
 
+  # Currently trying with file cache
   # tile-cache:
   #   image: bitnami/memcached:latest
   #   environment:
@@ -118,8 +132,9 @@ services:
     image: ktao87/cse356:search
     depends_on:
       - db
-    restart: always
     deploy:
+      restart_policy:
+        condition: on-failure
       placement:
         constraints:
           - node.role == manager
@@ -133,8 +148,16 @@ services:
         target: /dev/shm
         tmpfs:
           size: 2048000000 # 2gb
-    restart: always
     deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 7.5GB
+        reservations:
+          cpus: '4'
+          memory: 6GB
+      restart_policy:
+        condition: on-failure
       placement:
         constraints:
           - node.hostname == db

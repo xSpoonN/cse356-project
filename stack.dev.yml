@@ -5,7 +5,8 @@ networks:
   monitor-net:
 
 volumes:
-  osm-data:
+  cse356_project_osm-data:
+    external: true
   mongo-data:
   mongo-config:
   portainer-data:
@@ -28,8 +29,7 @@ services:
     build:
       context: ./docker/nginx/
       dockerfile: ./nginx.Dockerfile
-    image: ktao87/cse356:nginx
-    platform: linux/amd64
+    image: nginx:dev
     ports:
       - '80:80'
     volumes:
@@ -45,19 +45,17 @@ services:
         condition: on-failure
         max_attempts: 5
         delay: 5s
-      placement:
-        constraints:
-          - node.role == manager
 
   fluentd:
     build:
       context: ./docker/fluentd/
       dockerfile: ./fluentd.Dockerfile
-    image: ktao87/cse356:fluentd
-    platform: linux/amd64
+    image: fluentd:dev
     ports:
       - '24224:24224'
       - '24224:24224/udp'
+    networks:
+      - monitor-net
     deploy:
       mode: global
       placement:
@@ -67,43 +65,33 @@ services:
   frontend:
     build:
       context: ./frontend/
-      dockerfile: ../docker/frontend/frontend.prod.Dockerfile
-    image: ktao87/cse356:frontend
-    platform: linux/amd64
+      dockerfile: ../docker/frontend/frontend.dev.Dockerfile
+    image: frontend:dev
     depends_on:
       - fluentd
       - backend
       - search
+    <<: *logging
     deploy:
       restart_policy:
-        condition: none
-      placement:
-        constraints:
-          - node.role == manager
+        condition: on-failure
 
   backend:
     build:
       context: ./backend/
-      dockerfile: ../docker/backend/backend.prod.Dockerfile
-    image: ktao87/cse356:backend
-    platform: linux/amd64
+      dockerfile: ../docker/backend/backend.dev.Dockerfile
+    image: backend:dev
     depends_on:
       - mongo
       - db
     extra_hosts:
       host.docker.internal: host-gateway
+    volumes:
+      - ./backend/routes:/app/routes
+    <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
-    logging:
-      driver: 'fluentd'
-      options:
-        tag: backend
-        fluentd-address: fluentd:24224
-        fluentd-async-connect: 'true'
 
   mongo:
     image: mongo:latest
@@ -114,35 +102,23 @@ services:
       MONGO_INITDB_ROOT_USERNAME: 'root'
       MONGO_INITDB_ROOT_PASSWORD: 'password'
       MONGO_INITDB_DATABASE: 'user'
+    <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
 
   tile-server:
     build:
       context: ./docker/tile-server/
       dockerfile: ./tile.Dockerfile
-    image: ktao87/cse356:tile-server
-    platform: linux/amd64
+    image: tile-server:dev
     volumes:
-      - /var/cache/tiles:/var/cache/tiles
+      - tile-server-cache:/var/cache/tiles
+    <<: *logging
     deploy:
-      resources:
-        limits:
-          cpus: '4'
-          memory: 7.5GB
-        reservations:
-          cpus: '4'
-          memory: 6GB
-      replicas: 3
+      replicas: 1
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.hostname == tile-server
 
   # Currently trying with file cache
   # tile-cache:
@@ -159,45 +135,32 @@ services:
 
   search:
     build:
-      context: ./search/
+      context: ./search
       dockerfile: ../docker/search/search.Dockerfile
-    image: ktao87/cse356:search
-    platform: linux/amd64
+    image: search:dev
     depends_on:
       - db
+    <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
 
   db:
     build:
       context: ./docker/db/
       dockerfile: ./db.Dockerfile
-    image: ktao87/cse356:db
-    platform: linux/amd64
+    image: db:dev
     volumes:
-      - osm-data:/var/lib/postgresql/14/main
-      - /backup:/backup
+      - cse356_project_osm-data:/var/lib/postgresql/14/main
+      - ./backup:/backup
       - type: tmpfs
         target: /dev/shm
         tmpfs:
           size: 2048000000 # 2gb
+    <<: *logging
     deploy:
-      resources:
-        limits:
-          cpus: '4'
-          memory: 7.5GB
-        reservations:
-          cpus: '4'
-          memory: 6GB
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.hostname == db
 
   agent:
     image: portainer/agent:2.19.4
@@ -220,7 +183,7 @@ services:
       - '9000:9000'
       - '8000:8000'
     volumes:
-      - portainer_data:/data
+      - portainer-data:/data
     networks:
       - agent_network
     deploy:
@@ -234,8 +197,7 @@ services:
     build:
       context: ./docker/prometheus/
       dockerfile: ./prometheus.Dockerfile
-    image: ktao87/cse356:prometheus
-    platform: linux/amd64
+    image: prometheus:dev
     volumes:
       - prometheus-data:/prometheus
     networks:
@@ -243,9 +205,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
 
   node-exporter:
     image: prom/node-exporter
@@ -268,12 +227,15 @@ services:
         condition: on-failure
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor
+    image: gcr.io/cadvisor/cadvisor:v0.47.1 # m1/m2 mac
+    cap_add:
+      - SYS_ADMIN
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
+      - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/machine-id:/etc/machine-id:ro
     ports:
       - 8088:8080
     networks:
@@ -287,8 +249,7 @@ services:
     build:
       context: ./docker/grafana/
       dockerfile: ./grafana.Dockerfile
-    image: ktao87/cse356:grafana
-    platform: linux/amd64
+    image: grafana:dev
     depends_on:
       - prometheus
     ports:
@@ -302,25 +263,18 @@ services:
       - monitor-net
     user: '472'
     deploy:
-      restart_policy:
-        condition: on-failure
       placement:
         constraints:
           - node.role==manager
+      restart_policy:
+        condition: on-failure
 
   loki:
     build:
       context: ./docker/loki/
       dockerfile: ./loki.Dockerfile
-    image: ktao87/cse356:loki
-    platform: linux/amd64
+    image: loki:dev
     networks:
       - monitor-net
     volumes:
       - loki-data:/data
-    deploy:
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.role==manager

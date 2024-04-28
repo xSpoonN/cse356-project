@@ -3,9 +3,9 @@
   hosts: swarm_manager
   tasks:
     - name: Build the Docker image
-      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" build
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" build
     - name: Push the Docker image
-      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" push
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" push
 
 - name: Setup VMs
   hosts: all
@@ -48,11 +48,6 @@
       service:
         name: docker
         state: started
-
-    - name: Add a line to /etc/hosts
-      lineinfile:
-        path: /etc/hosts
-        line: "{{ hostvars[groups['main'][0]]['ansible_default_ipv4']['address'] }} fluentd"
 
 - name: Setting up mail server
   hosts: swarm_manager
@@ -106,11 +101,6 @@
       shell: git checkout {{ project_branch }}
       args:
         chdir: /root/project
-
-    - name: Create a directory for logs
-      file:
-        path: '/root/project/logs'
-        state: directory
 
 - name: Setup Docker Swarm Manager
   hosts: swarm_manager
@@ -172,3 +162,8 @@
       retries: 5
       delay: 3
       until: grep_output.stdout != ""
+
+    # OUTPUT the next manual steps to follow
+    - name: NEXT MANUAL STEPS
+      ansible.builtin.debug:
+        msg: "Please run the following command to deploy the services:\n\n1) Copy backup folder to db container\n2) Copy tile caches to tile containers\n3) Deploy the swarm stack\n4) Make sure to restart tile containers after db is fully loaded"

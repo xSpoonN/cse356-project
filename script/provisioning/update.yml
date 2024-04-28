@@ -3,9 +3,9 @@
   hosts: swarm_manager
   tasks:
     - name: Build the Docker image
-      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" build
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" build
     - name: Push the Docker image
-      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" push
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" push
 
 - name: Update the project
   hosts: swarm_manager

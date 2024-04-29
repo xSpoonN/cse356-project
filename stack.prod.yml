@@ -25,11 +25,7 @@ x-logging-options: &logging
 
 services:
   nginx:
-    build:
-      context: ./docker/nginx/
-      dockerfile: ./nginx.Dockerfile
     image: ktao87/cse356:nginx
-    platform: linux/amd64
     ports:
       - '80:80'
     volumes:
@@ -57,11 +53,7 @@ services:
           - node.role == manager
 
   fluentd:
-    build:
-      context: ./docker/fluentd/
-      dockerfile: ./fluentd.Dockerfile
     image: ktao87/cse356:fluentd
-    platform: linux/amd64
     ports:
       - '24224:24224'
       - '24224:24224/udp'
@@ -71,11 +63,7 @@ services:
         condition: on-failure
 
   frontend:
-    build:
-      context: ./frontend/
-      dockerfile: ../docker/frontend/frontend.prod.Dockerfile
     image: ktao87/cse356:frontend
-    platform: linux/amd64
     depends_on:
       - fluentd
       - backend
@@ -88,11 +76,7 @@ services:
           - node.role == manager
 
   backend:
-    build:
-      context: ./backend/
-      dockerfile: ../docker/backend/backend.prod.Dockerfile
     image: ktao87/cse356:backend
-    platform: linux/amd64
     depends_on:
       - mongo
       - db
@@ -123,13 +107,9 @@ services:
           - node.role == manager
 
   tile-server:
-    build:
-      context: ./docker/tile-server/
-      dockerfile: ./tile.Dockerfile
     image: ktao87/cse356:tile-server
-    platform: linux/amd64
     ports:
-      - '80:80'
+      - '8080:80'
     volumes:
       - /var/cache/tiles:/var/cache/tiles
     deploy:
@@ -140,7 +120,7 @@ services:
         reservations:
           cpus: '2'
           memory: 2GB
-      replicas: 3
+      replicas: 1
       restart_policy:
         condition: on-failure
       placement:
@@ -161,11 +141,7 @@ services:
   #         - node.hostname == cache
 
   search:
-    build:
-      context: ./search/
-      dockerfile: ../docker/search/search.Dockerfile
     image: ktao87/cse356:search
-    platform: linux/amd64
     depends_on:
       - db
     deploy:
@@ -176,11 +152,7 @@ services:
           - node.role == manager
 
   db:
-    build:
-      context: ./docker/db/
-      dockerfile: ./db.Dockerfile
     image: ktao87/cse356:db
-    platform: linux/amd64
     volumes:
       - osm-data:/var/lib/postgresql/14/main
       - /backup:/backup
@@ -234,11 +206,7 @@ services:
           - node.role == manager
 
   prometheus:
-    build:
-      context: ./docker/prometheus/
-      dockerfile: ./prometheus.Dockerfile
     image: ktao87/cse356:prometheus
-    platform: linux/amd64
     volumes:
       - prometheus-data:/prometheus
     networks:
@@ -287,11 +255,7 @@ services:
         condition: on-failure
 
   grafana:
-    build:
-      context: ./docker/grafana/
-      dockerfile: ./grafana.Dockerfile
     image: ktao87/cse356:grafana
-    platform: linux/amd64
     depends_on:
       - prometheus
     ports:
@@ -312,15 +276,11 @@ services:
           - node.hostname==monitor
 
   loki:
-    build:
-      context: ./docker/loki/
-      dockerfile: ./loki.Dockerfile
     image: ktao87/cse356:loki
-    platform: linux/amd64
     networks:
       - monitor-net
     volumes:
-      - loki-data:/tmp/loki
+      - loki-data:/src/loki
     deploy:
       restart_policy:
         condition: on-failure

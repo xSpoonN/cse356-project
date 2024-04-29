@@ -3,9 +3,9 @@
   hosts: swarm_manager
   tasks:
     - name: Build the Docker image
-      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" build
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" build
     - name: Push the Docker image
-      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" push
+      local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" push
       retries: 5
 
 - name: Setup VMs
@@ -159,9 +159,6 @@
         name: docker.service
         daemon_reload: true
         enabled: true
-    
-    - name: Add label to the manager node
-      shell: docker node update --label-add monitoring=true {{ hostvars[groups['swarm_manager'][0]].ansible_hostname }}
 
     - name: Check hostname of workers are changed
       shell: docker node ls | grep "{{ hostvars[worker]['custom_hostname'] }}"
@@ -173,3 +170,8 @@
       retries: 5
       delay: 3
       until: grep_output.stdout != ""
+    
+    - name: Deploy the stack
+      shell: docker stack deploy -d -c /root/project/stack.prod.yml {{ milestone }}
+      args:
+        chdir: /root/project

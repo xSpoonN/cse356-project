@@ -11,7 +11,7 @@ ssh -i cse356 root@$DB_HOST 'docker container run --name db -p 5432:5432 -v osm-
 
 java -jar ./fdt.jar -ss 1M -P 10 -c $TILE_HOST ../../tile-server-cache.tar.gz -d /var/cache/tiles
 
-ssh -i cse356 root@$TILE_HOST 'tar -xvf /var/cache/tiles/tile-server-cache.tar.gz -C /var/cache/tiles'
+ssh -i cse356 root@$TILE_HOST 'tar -xvf /var/cache/tiles/tile-server-cache.tar.gz -C /var/cache/tiles && mv /var/cache/tiles/data/default /var/cache/tiles/default && rmdir /var/cache/tiles/data'
 
 # Try to connect to the database
 while ! docker container run --rm -e PGPASSWORD=mysecretpassword postgres:14-bullseye psql -h $DB_HOST -U postgres -d gis -c "SELECT 1" > /dev/null; do

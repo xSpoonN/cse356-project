@@ -57,6 +57,8 @@ services:
     ports:
       - '24224:24224'
       - '24224:24224/udp'
+    networks:
+      - monitor-net
     deploy:
       mode: global
       restart_policy:

@@ -10,11 +10,22 @@ import { sleep } from 'k6';
 
 // Read by K6 during init stage
 export const options = {
-  stages: [
+  stages: [ // M3 Target
     { duration: '2m', target: 50 }, // ramp up to 50 users over 2 minutes
-    { duration: '3m', target: 50 }, // stay at 50 users for 3 minutes
+    { duration: '2m', target: 100 }, // ramp up to 100 users over 2 minutes
+    { duration: '2m', target: 150 }, // ramp up to 150 users over 2 minutes
+    { duration: '3m', target: 150 }, // stay at 150 users for 3 minutes
     { duration: '1m', target: 0 }, // ramp down to 0 users
   ],
+  /* stages: [ // M4 Target
+    { duration: '2m', target: 100 }, // ramp up to 150 users over 2 minutes
+    { duration: '2m', target: 250 }, // ramp up to 250 users over 2 minutes
+    { duration: '3m', target: 500 }, // ramp up to 500 users over 3 minutes
+    { duration: '5m', target: 1000 }, // ramp up to 1000 users over 5 minutes
+    { duration: '5m', target: 1500 }, // ramp up to 1500 users over 5 minutes
+    { duration: '3m', target: 1500 }, // stay at 1500 users for 3 minutes
+    { duration: '1m', target: 0 }, // ramp down to 0 users
+  ], */
   thresholds: {
     http_req_duration: ['p(95)<250'], // 95% of requests must complete below 250ms
   },
@@ -37,6 +48,10 @@ const boundingBoxes = {
     [-75.28, 39.867],
     [-74.955, 40.137],
   ],
+  'Region': [
+    [-80.31, 39.08],
+    [-66.85, 47.48]
+  ]
 };
 
 /**
@@ -79,9 +94,9 @@ export default function () {
     __ENV.NODE_ENV === 'production'
       ? 'http://mygroop.cse356.compas.cs.stonybrook.edu'
       : 'http://localhost';
-  const bbox = chooseValue(boundingBoxes, 'Stony Brook');
+  const bbox = chooseValue(boundingBoxes, 'Region');
   const source = getRandomCoordinate(bbox);
-  const zoom = Math.floor(Math.random() * 20);
+  const zoom = Math.floor(Math.random() * 13) + 6; // Random zoom level between 6 and 18
 
   // Convert lat, lon to tile coordinates
   let payload = JSON.stringify({
@@ -109,54 +124,44 @@ export default function () {
     }
   }
 
-  // Login
-  const credentials = {
-    username: 'admin',
-    password: 'admin',
-  };
-  http.post(`${baseUrl}/api/login`, JSON.stringify(credentials), {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  // Search routes
-  const destination = getRandomCoordinate(
-    chooseValue(boundingBoxes, 'Stony Brook')
-  );
-  payload = JSON.stringify({
-    source: {
-      lat: source[1],
-      lon: source[0],
-    },
-    destination: {
-      lat: destination[1],
-      lon: destination[0],
-    },
-  });
-  console.log(`Searching routes for ${source} -> ${destination}`);
-  const routes = http
-    .post(`${baseUrl}/api/route`, payload, {
-      headers: {
-        'Content-Type': 'application/json',
+  if (Math.random() < 0.15) { // Only try routes 15% of the time
+    // Search routes
+    const destination = getRandomCoordinate(
+      chooseValue(boundingBoxes, 'Stony Brook')
+    );
+    payload = JSON.stringify({
+      source: {
+        lat: source[1],
+        lon: source[0],
       },
-    })
-    .json();
-
-  for (const route of routes) {
-    const {
-      coordinates: { lat, lon },
-    } = route;
-    const { x_tile, y_tile } = http
-      .post(`${baseUrl}/convert`, JSON.stringify({ lat, long: lon, zoom }), {
+      destination: {
+        lat: destination[1],
+        lon: destination[0],
+      },
+    });
+    console.log(`Searching routes for ${source} -> ${destination}`);
+    const routes = http
+      .post(`${baseUrl}/api/route`, payload, {
         headers: {
           'Content-Type': 'application/json',
         },
       })
       .json();
 
-    http.get(`${baseUrl}/tiles/${zoom}/${x_tile}/${y_tile}.png`);
-  }
+    for (const route of routes) {
+      const {
+        coordinates: { lat, lon },
+      } = route;
+      const { x_tile, y_tile } = http
+        .post(`${baseUrl}/convert`, JSON.stringify({ lat, long: lon, zoom }), {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        .json();
 
+      http.get(`${baseUrl}/tiles/${zoom}/${x_tile}/${y_tile}.png`);
+    }
+  }
   sleep(1);
 }

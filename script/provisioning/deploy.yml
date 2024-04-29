@@ -6,6 +6,7 @@
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" build
     - name: Push the Docker image
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../stack.prod.yml" push
+      retries: 5
 
 - name: Setup VMs
   hosts: all
@@ -129,6 +130,16 @@
         name: '{{ custom_hostname }}'
       ignore_errors: true
 
+- name: Create a cache directory for tile server
+  hosts: tileserver
+  become: yes
+  tasks:
+    - name: Create cache directory
+      file:
+        path: /var/cache/tiles
+        state: directory
+        mode: 0777
+
 - name: Setup Docker Swarm Worker Nodes
   hosts: swarm_workers
   become: yes
@@ -162,8 +173,3 @@
       retries: 5
       delay: 3
       until: grep_output.stdout != ""
-
-    # OUTPUT the next manual steps to follow
-    - name: NEXT MANUAL STEPS
-      ansible.builtin.debug:
-        msg: "Please run the following command to deploy the services:\n\n1) Copy backup folder to db container\n2) Copy tile caches to tile containers\n3) Deploy the swarm stack\n4) Make sure to restart tile containers after db is fully loaded"

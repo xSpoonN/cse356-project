@@ -6,11 +6,11 @@ networks:
 
 volumes:
   osm-data:
+    external: true
   mongo-data:
   mongo-config:
   portainer-data:
   nginx-tile-cache:
-  tile-server-cache:
   prometheus-data:
   grafana-data:
   loki-data:
@@ -41,6 +41,13 @@ services:
       - tile-server
     <<: *logging
     deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2GB
+        reservations:
+          cpus: '2'
+          memory: 1GB
       restart_policy:
         condition: on-failure
         max_attempts: 5
@@ -60,9 +67,8 @@ services:
       - '24224:24224/udp'
     deploy:
       mode: global
-      placement:
-        constraints:
-          - node.role == manager
+      restart_policy:
+        condition: on-failure
 
   frontend:
     build:
@@ -92,18 +98,13 @@ services:
       - db
     extra_hosts:
       host.docker.internal: host-gateway
+    <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
       placement:
         constraints:
           - node.role == manager
-    logging:
-      driver: 'fluentd'
-      options:
-        tag: backend
-        fluentd-address: fluentd:24224
-        fluentd-async-connect: 'true'
 
   mongo:
     image: mongo:latest
@@ -127,16 +128,18 @@ services:
       dockerfile: ./tile.Dockerfile
     image: ktao87/cse356:tile-server
     platform: linux/amd64
+    ports:
+      - '80:80'
     volumes:
       - /var/cache/tiles:/var/cache/tiles
     deploy:
       resources:
         limits:
-          cpus: '4'
-          memory: 7.5GB
+          cpus: '2'
+          memory: 3.5GB
         reservations:
-          cpus: '4'
-          memory: 6GB
+          cpus: '2'
+          memory: 2GB
       replicas: 3
       restart_policy:
         condition: on-failure
@@ -245,7 +248,7 @@ services:
         condition: on-failure
       placement:
         constraints:
-          - node.role == manager
+          - node.hostname==monitor
 
   node-exporter:
     image: prom/node-exporter
@@ -306,7 +309,7 @@ services:
         condition: on-failure
       placement:
         constraints:
-          - node.role==manager
+          - node.hostname==monitor
 
   loki:
     build:
@@ -323,4 +326,4 @@ services:
         condition: on-failure
       placement:
         constraints:
-          - node.role==manager
+          - node.hostname==monitor

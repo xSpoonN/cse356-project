@@ -11,7 +11,6 @@ volumes:
   mongo-config:
   portainer-data:
   nginx-tile-cache:
-  tile-server-cache:
   prometheus-data:
   grafana-data:
   loki-data:

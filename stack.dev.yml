@@ -277,4 +277,4 @@ services:
     networks:
       - monitor-net
     volumes:
-      - loki-data:/data
+      - loki-data:/tmp/loki

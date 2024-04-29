@@ -70,6 +70,7 @@ services:
       - fluentd
       - backend
       - search
+    <<: *logging
     deploy:
       restart_policy:
         condition: none
@@ -101,6 +102,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: 'root'
       MONGO_INITDB_ROOT_PASSWORD: 'password'
       MONGO_INITDB_DATABASE: 'user'
+    <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
@@ -114,6 +116,7 @@ services:
       - '8080:80'
     volumes:
       - /var/cache/tiles:/var/cache/tiles
+    <<: *logging
     deploy:
       resources:
         limits:
@@ -146,6 +149,7 @@ services:
     image: ktao87/cse356:search
     depends_on:
       - db
+    <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
@@ -162,6 +166,7 @@ services:
         target: /dev/shm
         tmpfs:
           size: 2048000000 # 2gb
+    <<: *logging
     deploy:
       resources:
         limits:

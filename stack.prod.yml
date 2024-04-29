@@ -281,6 +281,7 @@ services:
       - monitor-net
     volumes:
       - loki-data:/src/loki
+    user: '0'
     deploy:
       restart_policy:
         condition: on-failure

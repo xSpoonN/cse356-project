@@ -6,6 +6,7 @@
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" build
     - name: Push the Docker image
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" push
+      retries: 5
 
 - name: Update the project
   hosts: swarm_manager

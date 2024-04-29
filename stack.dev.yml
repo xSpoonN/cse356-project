@@ -5,7 +5,7 @@ networks:
   monitor-net:
 
 volumes:
-  osm-data:
+  cse356_project_osm-data:
     external: true
   mongo-data:
   mongo-config:
@@ -25,7 +25,10 @@ x-logging-options: &logging
 
 services:
   nginx:
-    image: ktao87/cse356:nginx
+    build:
+      context: ./docker/nginx/
+      dockerfile: ./nginx.Dockerfile
+    image: nginx:dev
     ports:
       - '80:80'
     volumes:
@@ -37,23 +40,16 @@ services:
       - tile-server
     <<: *logging
     deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2GB
-        reservations:
-          cpus: '2'
-          memory: 1GB
       restart_policy:
         condition: on-failure
         max_attempts: 5
         delay: 5s
-      placement:
-        constraints:
-          - node.role == manager
 
   fluentd:
-    image: ktao87/cse356:fluentd
+    build:
+      context: ./docker/fluentd/
+      dockerfile: ./fluentd.Dockerfile
+    image: fluentd:dev
     ports:
       - '24224:24224'
       - '24224:24224/udp'
@@ -61,11 +57,15 @@ services:
       - monitor-net
     deploy:
       mode: global
-      restart_policy:
-        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
 
   frontend:
-    image: ktao87/cse356:frontend
+    build:
+      context: ./frontend/
+      dockerfile: ../docker/frontend/frontend.dev.Dockerfile
+    image: frontend:dev
     depends_on:
       - fluentd
       - backend
@@ -73,25 +73,24 @@ services:
     <<: *logging
     deploy:
       restart_policy:
-        condition: none
-      placement:
-        constraints:
-          - node.role == manager
+        condition: on-failure
 
   backend:
-    image: ktao87/cse356:backend
+    build:
+      context: ./backend/
+      dockerfile: ../docker/backend/backend.dev.Dockerfile
+    image: backend:dev
     depends_on:
       - mongo
       - db
     extra_hosts:
       host.docker.internal: host-gateway
+    volumes:
+      - ./backend/routes:/app/routes
     <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
 
   mongo:
     image: mongo:latest
@@ -106,31 +105,19 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
 
   tile-server:
-    image: ktao87/cse356:tile-server
-    ports:
-      - '8080:80'
+    build:
+      context: ./docker/tile-server/
+      dockerfile: ./tile.Dockerfile
+    image: tile-server:dev
     volumes:
-      - /var/cache/tiles:/var/cache/tiles
+      - tile-server-cache:/var/cache/tiles
     <<: *logging
     deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 3.5GB
-        reservations:
-          cpus: '2'
-          memory: 2GB
       replicas: 1
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.hostname == tile-server
 
   # Currently trying with file cache
   # tile-cache:
@@ -146,40 +133,33 @@ services:
   #         - node.hostname == cache
 
   search:
-    image: ktao87/cse356:search
+    build:
+      context: ./search
+      dockerfile: ../docker/search/search.Dockerfile
+    image: search:dev
     depends_on:
       - db
     <<: *logging
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
 
   db:
-    image: ktao87/cse356:db
+    build:
+      context: ./docker/db/
+      dockerfile: ./db.Dockerfile
+    image: db:dev
     volumes:
-      - osm-data:/var/lib/postgresql/14/main
-      - /backup:/backup
+      - cse356_project_osm-data:/var/lib/postgresql/14/main
+      - ./backup:/backup
       - type: tmpfs
         target: /dev/shm
         tmpfs:
           size: 2048000000 # 2gb
     <<: *logging
     deploy:
-      resources:
-        limits:
-          cpus: '4'
-          memory: 7.5GB
-        reservations:
-          cpus: '4'
-          memory: 6GB
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.hostname == db
 
   agent:
     image: portainer/agent:2.19.4
@@ -213,7 +193,10 @@ services:
           - node.role == manager
 
   prometheus:
-    image: ktao87/cse356:prometheus
+    build:
+      context: ./docker/prometheus/
+      dockerfile: ./prometheus.Dockerfile
+    image: prometheus:dev
     volumes:
       - prometheus-data:/prometheus
     networks:
@@ -221,9 +204,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - node.hostname==monitor
 
   node-exporter:
     image: prom/node-exporter
@@ -246,12 +226,15 @@ services:
         condition: on-failure
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor
+    image: gcr.io/cadvisor/cadvisor:v0.47.1 # m1/m2 mac
+    cap_add:
+      - SYS_ADMIN
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
+      - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/machine-id:/etc/machine-id:ro
     ports:
       - 8088:8080
     networks:
@@ -262,7 +245,10 @@ services:
         condition: on-failure
 
   grafana:
-    image: ktao87/cse356:grafana
+    build:
+      context: ./docker/grafana/
+      dockerfile: ./grafana.Dockerfile
+    image: grafana:dev
     depends_on:
       - prometheus
     ports:
@@ -276,22 +262,18 @@ services:
       - monitor-net
     user: '472'
     deploy:
-      restart_policy:
-        condition: on-failure
       placement:
         constraints:
-          - node.hostname==monitor
+          - node.role==manager
+      restart_policy:
+        condition: on-failure
 
   loki:
-    image: ktao87/cse356:loki
+    build:
+      context: ./docker/loki/
+      dockerfile: ./loki.Dockerfile
+    image: loki:dev
     networks:
       - monitor-net
     volumes:
-      - loki-data:/src/loki
-    user: '0'
-    deploy:
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.hostname==monitor
+      - loki-data:/tmp/loki

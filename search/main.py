@@ -54,7 +54,7 @@ async def search(query: SearchQuery):
         )
 
     try:
-        response = await api.search(query.searchTerm, bounded_viewbox=True if query.onlyInBox else False, viewbox=f"{query.bbox.minLon},{query.bbox.maxLat},{query.bbox.maxLon},{query.bbox.minLat}", max_results=30, layers=DataLayer.ADDRESS | DataLayer.POI | DataLayer.RAILWAY | DataLayer.NATURAL | DataLayer.MANMADE, linked_places=True, address_details = True)
+        response = await api.search(query.searchTerm, bounded_viewbox=True if query.onlyInBox else False, viewbox=f"{query.bbox.minLon},{query.bbox.maxLat},{query.bbox.maxLon},{query.bbox.minLat}", max_results=30, layers=DataLayer.ADDRESS | DataLayer.POI | DataLayer.RAILWAY | DataLayer.NATURAL | DataLayer.MANMADE, address_details = True)
         print(response)
 
         box_center = [

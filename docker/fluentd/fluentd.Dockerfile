@@ -5,7 +5,7 @@ FROM fluentd
 USER root
 
 # Install the necessary plugins
-RUN gem install fluent-plugin-rewrite-tag-filter fluent-plugin-concat
+RUN gem install fluent-plugin-rewrite-tag-filter fluent-plugin-concat fluent-plugin-grafana-loki
 
 # Create necessary directories and adjust permissions
 RUN mkdir -p /var/log/fluentd

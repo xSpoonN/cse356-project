@@ -24,4 +24,7 @@
         fi
       ignore_errors: true
     - name: pre-render tiles
-      shell: nohup docker exec -i {{ container_id.stdout }} render_list_geo.pl -x -80.96 -X -66.88 -y 38.31 -Y 47.37 -z 12 -Z 15 -n 4 -l 4 -t /var/cache/tiles > /dev/null 2>&1 &
+      shell: nohup docker exec -i {{ container_id.stdout }} render_list_geo.pl -x -74.71 -X -71.7 -y 40.33 -Y 41.41 -z 16 -Z 18 -n 4 -l 4 -t /var/cache/tiles > /dev/null 2>&1 &
+    
+    # render_list_geo.pl -x -80.96 -X -66.88 -y 38.31 -Y 47.37 -> entire region (northeast)
+    # render_list_geo.pl -x -74.71 -X -71.7 -y 40.33 -Y 41.41 -> long island

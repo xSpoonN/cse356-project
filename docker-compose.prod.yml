@@ -1,14 +1,14 @@
 services:
   nginx:
     build:
-      context: ./docker/
+      context: ./docker/nginx/
       dockerfile: ./nginx.Dockerfile
     image: ktao87/cse356:nginx
     platform: linux/amd64
 
   fluentd:
     build:
-      context: ./docker/
+      context: ./docker/fluentd/
       dockerfile: ./fluentd.Dockerfile
     image: ktao87/cse356:fluentd
     platform: linux/amd64
@@ -16,14 +16,14 @@ services:
   frontend:
     build:
       context: ./frontend/
-      dockerfile: ../docker/frontend.prod.Dockerfile
+      dockerfile: ../docker/frontend/frontend.prod.Dockerfile
     image: ktao87/cse356:frontend
     platform: linux/amd64
 
   backend:
     build:
       context: ./backend/
-      dockerfile: ../docker/backend.prod.Dockerfile
+      dockerfile: ../docker/backend/backend.prod.Dockerfile
     image: ktao87/cse356:backend
     platform: linux/amd64
 
@@ -33,7 +33,7 @@ services:
 
   tile-server:
     build:
-      context: ./docker/
+      context: ./docker/tile-server/
       dockerfile: ./tile.Dockerfile
     image: ktao87/cse356:tile-server
     platform: linux/amd64
@@ -46,14 +46,14 @@ services:
     container_name: search_microservice
     build:
       context: ./search/
-      dockerfile: ../docker/search.Dockerfile
+      dockerfile: ../docker/search/search.Dockerfile
     image: ktao87/cse356:search
     platform: linux/amd64
 
   db:
     container_name: db
     build:
-      context: ./docker/
+      context: ./docker/db/
       dockerfile: ./db.Dockerfile
     image: ktao87/cse356:db
     platform: linux/amd64
@@ -65,3 +65,24 @@ services:
   # portainer:
   #   image: portainer/portainer-ce:2.19.4
   #   platform: linux/amd64
+
+  prometheus:
+    build:
+      context: ./docker/prometheus/
+      dockerfile: ./prometheus.Dockerfile
+    image: ktao87/cse356:prometheus
+    platform: linux/amd64
+
+  grafana:
+    build:
+      context: ./docker/grafana/
+      dockerfile: ./grafana.Dockerfile
+    image: ktao87/cse356:grafana
+    platform: linux/amd64
+
+  loki:
+    build:
+      context: ./docker/loki/
+      dockerfile: ./loki.Dockerfile
+    image: ktao87/cse356:loki
+    platform: linux/amd64

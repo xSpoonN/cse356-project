@@ -147,8 +147,6 @@ startService() {
     tail -Fv /var/log/postgresql/postgresql-14-main.log &
     tailpid=${!}
 
-    echo "Notifying services that db is ready"
-    echo "Script execution complete" | nc tile-server 1234
     wait $tailpid
 }
 

@@ -27,6 +27,8 @@ Run `docker compose up` in the root directory
 
 ## Testing on local
 Run `docker container run --rm -p 5665:5665 --net=host -v ./script/testing:/scripts ghcr.io/grafana/xk6-dashboard:0.7.3-alpha.1 run -e NODE_ENV=development "/scripts/load_testing.js"` in root directory.
+`docker container run --rm -p 5665:5665 --net=host -v "C:\Users\Spoon\OneDrive\Documents\School\2024-1 Spring\CSE356\CSE356_project\script\testing:/scripts" ghcr.io/grafana/xk6-dashboard:0.7.3-alpha.1 run -e NODE_ENV=production "/scripts/load_testing.js"`
+
 
 ## Notes
 Make sure docker container has 4 CPUs and 8GB of RAM at least. Otherwise, installing would fail due to OOM.

@@ -11,20 +11,20 @@ import { sleep } from 'k6';
 // Read by K6 during init stage
 export const options = {
   stages: [ // M3 Target
-    { duration: '2m', target: 50 }, // ramp up to 50 users over 2 minutes
-    { duration: '2m', target: 100 }, // ramp up to 100 users over 2 minutes
-    { duration: '2m', target: 150 }, // ramp up to 150 users over 2 minutes
-    { duration: '3m', target: 150 }, // stay at 150 users for 3 minutes
-    { duration: '1m', target: 0 }, // ramp down to 0 users
+    { duration: '30s', target: 50 }, // ramp up to 50 users over 30s
+    { duration: '30s', target: 100 }, // ramp up to 100 users over 30s
+    { duration: '1m', target: 150 }, // ramp up to 150 users over 1 minute
+    { duration: '4m', target: 150 }, // stay at 150 users for 4 minutes
+    { duration: '10s', target: 0 }, // ramp down to 0 users
   ],
   /* stages: [ // M4 Target
-    { duration: '2m', target: 100 }, // ramp up to 150 users over 2 minutes
-    { duration: '2m', target: 250 }, // ramp up to 250 users over 2 minutes
-    { duration: '3m', target: 500 }, // ramp up to 500 users over 3 minutes
-    { duration: '5m', target: 1000 }, // ramp up to 1000 users over 5 minutes
-    { duration: '5m', target: 1500 }, // ramp up to 1500 users over 5 minutes
+    { duration: '1m', target: 100 }, // ramp up to 150 users over 1 minute
+    { duration: '1m', target: 250 }, // ramp up to 250 users over 1 minute
+    { duration: '2m', target: 500 }, // ramp up to 500 users over 2 minutes
+    { duration: '3m', target: 1000 }, // ramp up to 1000 users over 3 minutes
+    { duration: '3m', target: 1500 }, // ramp up to 1500 users over 3 minutes
     { duration: '3m', target: 1500 }, // stay at 1500 users for 3 minutes
-    { duration: '1m', target: 0 }, // ramp down to 0 users
+    { duration: '15s', target: 0 }, // ramp down to 0 users
   ], */
   thresholds: {
     http_req_duration: ['p(95)<250'], // 95% of requests must complete below 250ms
@@ -64,12 +64,12 @@ function getRandomCoordinate(box) {
 }
 
 /**
- * @returns 90% of the time, return the value of the key in the object, otherwise return a value from random keys.
+ * @returns 99% of the time, return the value of the key in the object, otherwise return a value from random keys.
  */
 function chooseValue(obj, key) {
   let keys = Object.keys(obj);
   if (key) {
-    if (Math.random() < 0.9) {
+    if (Math.random() < 0.99) {
       return obj[key];
     } else {
       // Filter out the selected key
@@ -96,7 +96,7 @@ export default function () {
       : 'http://localhost';
   const bbox = chooseValue(boundingBoxes, 'Region');
   const source = getRandomCoordinate(bbox);
-  const zoom = Math.floor(Math.random() * 13) + 6; // Random zoom level between 6 and 18
+  const zoom = Math.floor(Math.random() * 11) + 6; // Random zoom level between 6 and 16
 
   // Convert lat, lon to tile coordinates
   let payload = JSON.stringify({
@@ -124,7 +124,7 @@ export default function () {
     }
   }
 
-  if (Math.random() < 0.15) { // Only try routes 15% of the time
+  if (Math.random() < 0) { // Only try routes 15% of the time
     // Search routes
     const destination = getRandomCoordinate(
       chooseValue(boundingBoxes, 'Stony Brook')

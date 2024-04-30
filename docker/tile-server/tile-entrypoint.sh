@@ -7,8 +7,8 @@ done
 
 echo "Starting apache2 and renderd"
 service apache2 restart
-G_MESSAGES_DEBUG=info renderd -f &
+G_MESSAGES_DEBUG=all renderd -f &
 # tail -F /var/log/renderd.log /var/log/apache2/access.log /var/log/apache2/error.log &
 pid=${!}
 
-wait $pid
+wait $pidl

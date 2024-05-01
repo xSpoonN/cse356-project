@@ -120,11 +120,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 3.5GB
+          cpus: '4'
+          memory: 7.5GB
         reservations:
-          cpus: '2'
-          memory: 2GB
+          cpus: '4'
+          memory: 6GB
       replicas: 1
       restart_policy:
         condition: on-failure
@@ -226,25 +226,32 @@ services:
           - node.hostname==monitor
 
   node-exporter:
-    image: prom/node-exporter
+    image: stefanprodan/swarmprom-node-exporter
+    environment:
+      - NODE_ID={{.Node.ID}}
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - /etc/hostname:/etc/nodename:ro
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--path.rootfs=/rootfs'
-      - --collector.filesystem.ignored-mount-points
-      - '^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'
-    ports:
-      - 9100:9100
+      - '--collector.textfile.directory=/etc/node-exporter/'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--no-collector.ipvs'
     networks:
       - monitor-net
     deploy:
       mode: global
       restart_policy:
         condition: on-failure
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor

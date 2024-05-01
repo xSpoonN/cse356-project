@@ -1,4 +1,6 @@
 logs/**
+cache/**
+.venv
 .DS_Store
 node_modules
 backup/**

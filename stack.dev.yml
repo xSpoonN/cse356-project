@@ -10,9 +10,9 @@ volumes:
   mongo-data:
   mongo-config:
   portainer-data:
-  nginx-tile-cache:
+  tile-server-cache:
   prometheus-data:
-  grafana-data:
+  # grafana-data:
   loki-data:
 
 x-logging-options: &logging
@@ -32,7 +32,7 @@ services:
     ports:
       - '80:80'
     volumes:
-      - nginx-tile-cache:/var/cache/tiles
+      - ./cache:/var/cache/tiles
     depends_on:
       - frontend
       - backend
@@ -57,9 +57,6 @@ services:
       - monitor-net
     deploy:
       mode: global
-      placement:
-        constraints:
-          - node.role == manager
 
   frontend:
     build:
@@ -170,9 +167,6 @@ services:
       - agent_network
     deploy:
       mode: global
-      placement:
-        constraints:
-          - node.platform.os == linux
 
   portainer:
     image: portainer/portainer-ce:2.19.4
@@ -188,9 +182,6 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
 
   prometheus:
     build:
@@ -253,8 +244,8 @@ services:
       - prometheus
     ports:
       - 3000:3000
-    volumes:
-      - grafana-data:/var/lib/grafana
+    # volumes:
+    #   - grafana-data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -262,9 +253,6 @@ services:
       - monitor-net
     user: '472'
     deploy:
-      placement:
-        constraints:
-          - node.role==manager
       restart_policy:
         condition: on-failure
 

@@ -38,11 +38,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2GB
+          cpus: '4'
+          memory: 7.5GB
         reservations:
-          cpus: '2'
-          memory: 1GB
+          cpus: '4'
+          memory: 6GB
       restart_policy:
         condition: on-failure
         max_attempts: 5

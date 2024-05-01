@@ -12,6 +12,10 @@
   hosts: all
   become: yes
   tasks:
+    - name: Kill /var/lib/dpkg/lock-frontend process if exists
+      shell: kill -9 $(lsof -t /var/lib/dpkg/lock-frontend)
+      ignore_errors: true
+    
     - name: Install required packages
       apt:
         name:
@@ -51,7 +55,7 @@
         state: started
 
 - name: Setting up mail server
-  hosts: swarm_manager
+  hosts: backend
   become: yes
   tasks:
     - name: Install postfix

@@ -1,6 +1,6 @@
 ---
 - name: Setup VMs
-  hosts: main:db
+  hosts: main
   become: yes
   tasks:
     - name: Install required packages
@@ -40,10 +40,7 @@
       service:
         name: docker
         state: started
-
-- name: Install Java
-  hosts: main:db
-  tasks:
+    
     - name: Install Java
       apt:
         name: default-jre
@@ -56,6 +53,6 @@
     - name: Run FDT
       shell: nohup java -jar ./fdt.jar -S &
 
-    - name: Run init script
-      debug:
-        msg: "Running the script: ./init.sh {{ groups['db'][0] }} {{ groups['main'][0] }} "
+    # - name: Run init script
+    #   debug:
+    #     msg: "Running the script: ./init.sh {{ groups['db'][0] }} {{ groups['main'][0] }} "

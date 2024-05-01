@@ -225,7 +225,7 @@ services:
           - node.hostname==monitor
 
   node-exporter:
-    image: stefanprodan/swarmprom-node-exporter
+    image: stefanprodan/swarmprom-node-exporter:v0.16.0
     environment:
       - NODE_ID={{.Node.ID}}
     volumes:

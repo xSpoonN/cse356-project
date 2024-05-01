@@ -57,4 +57,5 @@
       shell: nohup java -jar ./fdt.jar -S &
 
     - name: Run init script
-      local_action: ansible.builtin.shell "./init.sh {{ groups['tileserver'][0] }} {{ groups['db'][0] }} > init.log"
+      debug:
+        msg: "Running the script: ./init.sh {{ groups['db'][0] }} {{ groups['tileserver'][0] }} "

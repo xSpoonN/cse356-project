@@ -4,6 +4,7 @@
   tasks:
     - name: Build the Docker image
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" build
+      retries: 5
     - name: Push the Docker image
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" push
       retries: 5
@@ -30,4 +31,4 @@
         chdir: '/root/project'
 
     - name: Deploy stack to Docker Swarm
-      shell: docker stack deploy -c /root/project/stack.prod.yml {{ milestone }} --detach=true
+      shell: docker stack deploy -d -c /root/project/stack.prod.yml {{ milestone }}

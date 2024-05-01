@@ -96,7 +96,7 @@ export default function () {
       : 'http://localhost';
   const bbox = chooseValue(boundingBoxes, 'Region');
   const source = getRandomCoordinate(bbox);
-  const zoom = Math.floor(Math.random() * 11) + 6; // Random zoom level between 6 and 16
+  const zoom = Math.floor(Math.random() * 13) + 6; // Random zoom level between 6 and 18
 
   // Convert lat, lon to tile coordinates
   let payload = JSON.stringify({
@@ -124,7 +124,7 @@ export default function () {
     }
   }
 
-  if (Math.random() < 0) { // Only try routes 15% of the time
+  if (Math.random() < 0.05) { // Only try routes 15% of the time
     // Search routes
     const destination = getRandomCoordinate(
       chooseValue(boundingBoxes, 'Stony Brook')

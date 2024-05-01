@@ -10,7 +10,6 @@ volumes:
   mongo-data:
   mongo-config:
   portainer-data:
-  nginx-tile-cache:
   prometheus-data:
   grafana-data:
   loki-data:
@@ -29,7 +28,7 @@ services:
     ports:
       - '80:80'
     volumes:
-      - nginx-tile-cache:/var/cache/tiles
+      - /var/cache/tiles:/var/cache/tiles
     depends_on:
       - frontend
       - backend

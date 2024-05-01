@@ -47,7 +47,10 @@ router.post('/route', async (req, res) => {
   ),
   route AS (
     SELECT * FROM pgr_dijkstra(
-      'SELECT id, source, target, cost, reverse_cost FROM us_northeast_2po_4pgr',
+      'SELECT id, source, target, cost, reverse_cost 
+      FROM us_northeast_2po_4pgr as e,
+      (SELECT ST_Expand(ST_Extent(geom_way),0.1) as box FROM us_northeast_2po_4pgr as b
+        WHERE b.source = '|| (SELECT source FROM start) ||' OR b.source = ' || (SELECT source FROM destination) || ') as box WHERE e.geom_way && box.box'',
       (SELECT source_id FROM source),
       (SELECT target_id FROM destination),
       FALSE

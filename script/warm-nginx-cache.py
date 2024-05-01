@@ -33,9 +33,16 @@ def warmup_cache_in_bbox(tile_server, bbox, start_zoom, end_zoom):
                 else:
                     print(f"Failed to load: {url}")
 
-# bbox = [min_lon, min_lat, max_lon, max_lat]
-bbox = [-80.96, 47.37, -66.88, 37.70]
+# ENTIRE REGION
+bbox = [-80.96, 47.37, -66.88, 37.70] # bbox = [min_lon, min_lat, max_lon, max_lat]
 start_zoom = 6
 end_zoom = 15
+
+warmup_cache_in_bbox(tile_server, bbox, 6, 15)
+
+# LONG ISLAND
+bbox = [-74.71, 41.41, -71.7, 40.33]
+start_zoom = 16
+end_zoom = 18
 
 warmup_cache_in_bbox(tile_server, bbox, 6, 15)

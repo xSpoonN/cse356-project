@@ -1,8 +1,12 @@
 logs/**
 cache/**
+<<<<<<< HEAD
 .venv
+=======
+>>>>>>> 6d63f0f (add cache folder to gitignore)
 .DS_Store
 node_modules
 backup/**
 tile-server-cache.tar.gz
 script/provisioning/fdt.jar
+.venv

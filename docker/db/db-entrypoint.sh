@@ -134,6 +134,12 @@ importRoutingData() {
 }
 
 startService() {
+    echo "Creating index..."
+    sudo -u postgres psql -d gis -c "CREATE INDEX ON us_northeast_2po_4pgr USING gist(geom_way);"
+    echo "Clustering..."
+    sudo -u postgres psql -d gis -c "CLUSTER us_northeast_2po_4pgr USING us_northeast_2po_4pgr_geom_way_idx;"
+
+
     cd $PROJECT_DIR
     sudo -u postgres nominatim admin --check-database
     sudo -u postgres nominatim admin --warm

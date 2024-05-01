@@ -77,10 +77,9 @@ export default function Sidebar({ map, bbox }) {
     if (!map || !routeResults) return;
     markerLayerRef.current.clearLayers();
     routeLayerRef.current.clearLayers();
-    const useFull = true;
-    let results = useFull ? routeResults.full : routeResults.turns;
+    let results = routeResults.turns;
     if (results.length === 0) return;
-    if (!useFull) {
+    if (true) {
       if (results.length <= 200) {
         results.forEach(result => {
           L.marker([result.coordinates.lat, result.coordinates.lon])
@@ -227,46 +226,26 @@ export default function Sidebar({ map, bbox }) {
   const route = async () => {
     setLoading(true);
     try {
-      const [turns, full] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route`, {
-          method: 'POST',
-          body: JSON.stringify({
-            source: {
-              lat: source.lat,
-              lon: source.lon,
-            },
-            destination: {
-              lat: dest.lat,
-              lon: dest.lon,
-            },
-          }),
-          headers: {
-            'Content-Type': 'application/json',
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route`, {
+        method: 'POST',
+        body: JSON.stringify({
+          source: {
+            lat: source.lat,
+            lon: source.lon,
           },
-        }).then(res => res.json()),
-        fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_API_ENDPOINT}/api/route/full`,
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              source: {
-                lat: source.lat,
-                lon: source.lon,
-              },
-              destination: {
-                lat: dest.lat,
-                lon: dest.lon,
-              },
-            }),
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        ).then(res => res.json()),
-      ]);
-      console.log('route data: ', { turns, full });
+          destination: {
+            lat: dest.lat,
+            lon: dest.lon,
+          },
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then(res => res.json())
+        .then(data => setRouteResults({ turns: data }));
+      console.log('route data: ', { turns });
 
-      setRouteResults({ turns, full });
       setSearchResults([]);
     } catch (error) {
       console.error(error);

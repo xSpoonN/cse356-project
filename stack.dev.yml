@@ -261,6 +261,7 @@ services:
       context: ./docker/loki/
       dockerfile: ./loki.Dockerfile
     image: loki:dev
+    user: '0'
     networks:
       - monitor-net
     volumes:

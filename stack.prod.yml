@@ -35,6 +35,10 @@ services:
       - search
       - tile-server
     <<: *logging
+    ulimits:
+      nofile:
+        soft: 20000
+        hard: 40000
     deploy:
       resources:
         limits:
@@ -105,7 +109,9 @@ services:
       - MEMCACHED_CACHE_SIZE=2048 #2G
       - MEMCACHED_MAX_ITEM_SIZE=31457280 #in bytes
       - MEMCACHED_THREADS=1
-    command: /opt/bitnami/scripts/memcached/run.sh -v
+    command: /opt/bitnami/scripts/memcached/run.sh
+    ports:
+      - 11211:11211
     deploy:
       restart_policy:
         condition: on-failure

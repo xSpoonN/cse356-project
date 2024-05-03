@@ -1,24 +1,8 @@
 const express = require('express');
-const Memcached = require('memcached');
-const util = require('util');
-const PG = require('pg');
-
-async function connect_db() {
-  const pool = new PG.Pool({
-    user: 'postgres',
-    password: 'mysecretpassword',
-    host: 'db',
-    database: 'gis',
-  });
-  const client = await pool.connect();
-
-  return client;
-}
+const memcached = require('../lib/memcached_client');
+const connect_db = require('../lib/db');
 
 router = express.Router();
-const memcached = new Memcached('route-cache:11211');
-memcached.get = util.promisify(memcached.get);
-memcached.set = util.promisify(memcached.set);
 
 // router.use((req, res, next) => {
 //   if (!req.session.username) {
@@ -47,7 +31,7 @@ router.post('/route', async (req, res) => {
   dstLon = round_number(dstLon);
 
   // Check if source to destination key exists in cache
-  let cacheKey = `${srcLat},${srcLon},${dstLat},${dstLon}`;
+  let cacheKey = `${srcLat};${srcLon};${dstLat};${dstLon}`;
   let data;
   try {
     console.log('Checking cache: ', cacheKey);
@@ -82,13 +66,14 @@ router.post('/route', async (req, res) => {
     client.release();
     source_id = rows[0].source_id;
     target_id = rows[0].target_id;
-    memcached.set(cacheKey, `${source_id},${target_id}`, 14400);
-    cacheKey = `${source_id},${target_id}`;
+    memcached.set(cacheKey, `${source_id};${target_id}`, 2592000);
+    cacheKey = `${source_id};${target_id}`;
   } else {
     cacheKey = data;
   }
 
   // Check if the source to destination key exists in cache
+  console.log('Checking cache: ', cacheKey);
   try {
     data = await memcached.get(cacheKey);
   } catch (err) {
@@ -100,11 +85,13 @@ router.post('/route', async (req, res) => {
   if (data) {
     console.log('Cache hit');
     return res
-      .set('Cache-Control', 'public, max-age=14400')
+      .set('Cache-Control', 'public, max-age=2592000')
+      .set('Content-Type', 'application/json')
       .status(200)
-      .json(data);
+      .send(data);
   }
 
+  console.log('Cache miss');
   // If the key does not exist in cache, execute the query to find the route
   sql = `
   SELECT *
@@ -147,11 +134,11 @@ router.post('/route', async (req, res) => {
         })
       );
     });
-    memcached.set(cacheKey, noDuplicates, 14400);
+    memcached.set(cacheKey, JSON.stringify(noDuplicates), 2592000);
 
     client.release();
     return res
-      .set('Cache-Control', 'public, max-age=14400')
+      .set('Cache-Control', 'public, max-age=2592000')
       .status(200)
       .json(noDuplicates);
   } catch (error) {

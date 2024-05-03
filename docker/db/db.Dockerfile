@@ -46,7 +46,8 @@ RUN echo "host all all 0.0.0.0/0 reject" >> /etc/postgresql/14/main/pg_hba.conf 
     && echo "listen_addresses='*'" >> /etc/postgresql/14/main/postgresql.conf \
     && echo "tcp_keepalives_idle = 600" >> /etc/postgresql/14/main/postgresql.conf \
     && echo "tcp_keepalives_interval = 30" >> /etc/postgresql/14/main/postgresql.conf \
-    && echo "tcp_keepalives_count = 10" >> /etc/postgresql/14/main/postgresql.conf
+    && echo "tcp_keepalives_count = 10" >> /etc/postgresql/14/main/postgresql.conf \
+    && echo "max_connections = 3000" >> /etc/postgresql/14/main/postgresql.conf
 COPY ./postgres-tuning.conf /etc/postgresql/14/main/conf.d/
 
 COPY ./osm2po.config /osm2po/osm2po.config

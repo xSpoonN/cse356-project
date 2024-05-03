@@ -91,10 +91,24 @@ services:
       resources:
         limits:
           cpus: '2'
-          memory: 3GB
+          memory: 2GB
         reservations:
           cpus: '2'
-          memory: 2GB
+          memory: 1GB
+      placement:
+        constraints:
+          - node.hostname == backend
+
+  route-cache:
+    image: bitnami/memcached:latest
+    environment:
+      - MEMCACHED_CACHE_SIZE=2048 #2G
+      - MEMCACHED_MAX_ITEM_SIZE=31457280 #in bytes
+      - MEMCACHED_THREADS=1
+    command: /opt/bitnami/scripts/memcached/run.sh -v
+    deploy:
+      restart_policy:
+        condition: on-failure
       placement:
         constraints:
           - node.hostname == backend

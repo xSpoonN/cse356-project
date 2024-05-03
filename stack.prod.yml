@@ -86,6 +86,9 @@ services:
     depends_on:
       - mongo
       - db
+      - route-cache
+    ports:
+      - '3000:3000'
     extra_hosts:
       host.docker.internal: host-gateway
     <<: *logging
@@ -299,7 +302,7 @@ services:
     depends_on:
       - prometheus
     ports:
-      - 3000:3000
+      - 7777:3000
     volumes:
       - grafana-data:/var/lib/grafana
     environment:

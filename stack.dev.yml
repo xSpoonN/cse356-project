@@ -12,6 +12,7 @@ volumes:
   portainer-data:
   tile-server-cache:
   prometheus-data:
+  nginx-route-cache:
   # grafana-data:
   loki-data:
 
@@ -28,11 +29,12 @@ services:
     build:
       context: ./docker/nginx/
       dockerfile: ./nginx.Dockerfile
-    image: nginx:dev
+    image: ktao87/cse356:nginx
     ports:
       - '80:80'
     volumes:
-      - ./cache:/var/cache/tiles
+      - ./nginx-cache.tar.gz:/nginx-cache.tar.gz
+      - nginx-route-cache:/var/cache/api
     depends_on:
       - frontend
       - backend
@@ -80,11 +82,26 @@ services:
     depends_on:
       - mongo
       - db
+      - route-cache
     extra_hosts:
       host.docker.internal: host-gateway
     volumes:
       - ./backend/routes:/app/routes
+      - ./backend/server.js:/app/server.js
     <<: *logging
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  route-cache:
+    image: bitnami/memcached:latest
+    environment:
+      - MEMCACHED_CACHE_SIZE=8000 # 3.5GB
+      - MEMCACHED_MAX_ITEM_SIZE=31457280 #in bytes
+      - MEMCACHED_THREADS=2
+    command: /opt/bitnami/scripts/memcached/run.sh -v
+    ports:
+      - 11211:11211
     deploy:
       restart_policy:
         condition: on-failure
@@ -108,6 +125,8 @@ services:
       context: ./docker/tile-server/
       dockerfile: ./tile.Dockerfile
     image: tile-server:dev
+    ports:
+      - 8080:80
     volumes:
       - tile-server-cache:/var/cache/tiles
     <<: *logging
@@ -149,10 +168,11 @@ services:
     volumes:
       - cse356_project_osm-data:/var/lib/postgresql/14/main
       - ./backup:/backup
-      - type: tmpfs
-        target: /dev/shm
-        tmpfs:
-          size: 2048000000 # 2gb
+      # - type: tmpfs
+      #   target: /dev/shm
+      #   tmpfs:
+      #     size: 2048000000 # 2gb
+    shm_size: 2gb
     <<: *logging
     deploy:
       restart_policy:

@@ -4,6 +4,7 @@
   tasks:
     - name: Build the Docker image
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" build
+      retries: 5
     - name: Push the Docker image
       local_action: ansible.builtin.command docker compose -f "{{ playbook_dir }}/../../docker-compose.prod.yml" push
       retries: 5

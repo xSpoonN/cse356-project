@@ -1,6 +1,6 @@
 ---
 - name: Setup VMs
-  hosts: main
+  hosts: main:db
   become: yes
   tasks:
     - name: Install required packages
@@ -53,6 +53,6 @@
     - name: Run FDT
       shell: nohup java -jar ./fdt.jar -S &
 
-    # - name: Run init script
-    #   debug:
-    #     msg: "Running the script: ./init.sh {{ groups['db'][0] }} {{ groups['main'][0] }} "
+    - name: Run init script
+      debug:
+        msg: "Running the script: ./init.sh {{ groups['db'][0] }} {{ groups['main'][0] }} "

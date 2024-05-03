@@ -9,7 +9,7 @@ java -jar ./fdt.jar -ss 1M -P 10 -r -c $DB_HOST ../../backup/ -d /
 
 ssh -i cse356 root@$DB_HOST 'docker container run --name db -p 5432:5432 -v osm-data:/var/lib/postgresql/14/main -v /backup:/backup --tmpfs /dev/shm:size=2048000000 -d ktao87/cse356:db'
 
-java -jar ./fdt.jar -ss 1M -P 10 -c $MAIN_HOST ../../nginx.tar.gz -d /
+java -jar ./fdt.jar -ss 1M -P 10 -c $MAIN_HOST ../../nginx-cache.tar.gz -d /
 
 ssh -i cse356 root@$MAIN_HOST 'mkdir /var/cache/tiles && tar -xvf /nginx-cache.tar.gz -C /var/cache/tiles --strip-components 1 && chmod -R 777 /var/cache/tiles'
 

@@ -53,9 +53,9 @@ async def search(query: SearchQuery):
             location.lon
         )
 
+    print(f'Received /api/search request: {query.searchTerm} {query.bbox.minLat} {query.bbox.minLon} {query.bbox.maxLat} {query.bbox.maxLon}')
     try:
         response = await api.search(query.searchTerm, bounded_viewbox=True if query.onlyInBox else False, viewbox=f"{query.bbox.minLon},{query.bbox.maxLat},{query.bbox.maxLon},{query.bbox.minLat}", max_results=30, layers=DataLayer.ADDRESS | DataLayer.POI | DataLayer.RAILWAY | DataLayer.NATURAL | DataLayer.MANMADE, address_details = True)
-        print(response)
 
         box_center = [
             (query.bbox.minLat + query.bbox.maxLat) / 2,
@@ -98,6 +98,7 @@ async def search(query: SearchQuery):
         result.sort(key=lambda p: p['distance'])
         for item in result:
             del item['distance']
+        result.extend(result)
         return result
 
     except Exception as E:

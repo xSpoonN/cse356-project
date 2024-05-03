@@ -1,48 +1,38 @@
-import random
 import requests
+import sys
+import numpy as np
 
-route_server = 'http://localhost'
+# Correct the API URL if needed
+API_URL = 'http://localhost/api/route'  # Ensure this is correct
+# LAT_RANGE = (40.0, 43.0, 0.1)  # Start, stop, step
+LAT_RANGE = (43.1, 45.9, 0.1)  # Start, stop, step
+LON_RANGE = (-73.0, -79.9, -0.1)  # Start, stop, step
 
-def warmup_cache_for_routes(route_server, locations):
-    for i in range (len(locations) * 2):
-        start_key, start = random.choice(list(locations.items()))
-        temp = dict(filter(lambda x: x[0] != start_key, locations.items()))
-        end_key, end = random.choice(list(temp.items()))
-        url = f"{route_server}/route"
-        payload = {
-            "source": {
-                "lat": start[0],
-                "long": start[1]
-            },
-            "destination": {
-                "lat": end[0],
-                "long": end[1]
-            }
-        }
-        response = requests.post(url, json=payload)
-        if response.status_code == 200:
-            print(f"Warmed: {start_key} to {end_key}")
-        else:
-            print(f"Failed to load: {start_key} to {end_key}")
+def warm_cache():
+    lat_start, lat_stop, lat_step = LAT_RANGE
+    lon_start, lon_stop, lon_step = LON_RANGE
 
-locationMap = {
-    "SBU": [40.910265, -73.124097],
-    "MacArthur": [40.786524, -73.097794],
-    "JFK": [40.662105, -73.791171],
-    "Empire State Building": [40.748324,-73.9858658],
-    "Times Square": [40.7579787,-73.9881175],
-    "LGA": [40.768396, -73.865309],
-    "Yankee Stadium": [40.8297457,-73.9278642],
-    "Adelphi University": [40.7213213,-73.6541323],
-    "Port Washington": [40.844299, -73.701570],
-    "Riverhead": [40.917360, -72.662288],
-    "East Hampton": [40.963758, -72.185137],
-    "Callahans Beach": [40.918041, -73.282472],
-    "Hicksville": [40.768983, -73.524555],
-    "Bohemia": [40.769211, -73.114321],
-    "Glen Cove": [40.862148, -73.631744],
-    "Flushing": [40.757129, -73.827067]
-}
+    total_requests = ((lat_stop - lat_start) / lat_step + 1) * ((lon_stop - lon_start) / lon_step + 1)
+    print(f"Expected to make {int(total_requests)} requests to warm up the cache.", file=sys.stderr)
 
+    current_request = 1
+    for srcLat in np.arange(lat_start, lat_stop, lat_step):
+        for srcLon in np.arange(lon_start, lon_stop, lon_step):
+            for dstLat in np.arange(lat_start, lat_stop, lat_step):
+                for dstLon in np.arange(lon_start, lon_stop, lon_step):
+                    payload = {
+                        "source": {"lat": srcLat, "lon": srcLon},
+                        "destination": {"lat": dstLat, "lon": dstLon}
+                    }
+                    try:
+                        response = requests.post(API_URL, json=payload)
+                        if response.status_code == 200:
+                            print(f"WARMED - Request {current_request}: {srcLat}, {srcLon} to {dstLat}, {dstLon}")
+                        else:
+                            print(f"ERROR - Request {current_request}: {srcLat}, {srcLon} to {dstLat}, {dstLon} returned {response.status_code}", file=sys.stderr)
+                    except requests.exceptions.RequestException as e:
+                        print(f"FAILED - Request {current_request}: {srcLat}, {srcLon} to {dstLat}, {dstLon}\n{str(e)}", file=sys.stderr)
+                    current_request += 1
 
-warmup_cache_for_routes(route_server, locationMap)
+if __name__ == '__main__':
+    warm_cache()
